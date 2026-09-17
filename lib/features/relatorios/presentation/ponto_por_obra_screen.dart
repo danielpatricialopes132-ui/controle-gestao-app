@@ -140,7 +140,7 @@ class _PontoPorObraScreenState extends ConsumerState<PontoPorObraScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _mes,
+                  initialValue: _mes,
                   decoration: const InputDecoration(labelText: 'Mês', isDense: true),
                   items: List.generate(12, (i) => i + 1)
                       .map((m) => DropdownMenuItem(value: m, child: Text(m.toString().padLeft(2, '0'))))
@@ -156,7 +156,7 @@ class _PontoPorObraScreenState extends ConsumerState<PontoPorObraScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _ano,
+                  initialValue: _ano,
                   decoration: const InputDecoration(labelText: 'Ano', isDense: true),
                   items: [2024, 2025, 2026]
                       .map((a) => DropdownMenuItem(value: a, child: Text(a.toString())))

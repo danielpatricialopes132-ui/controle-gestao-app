@@ -138,7 +138,7 @@ class LivroCaixaScreen extends ConsumerWidget {
                       rows: [
                         // Saldo Anterior
                         DataRow(
-                          color: MaterialStateProperty.all(Colors.amber[50]),
+                          color: WidgetStateProperty.all(Colors.amber[50]),
                           cells: [
                             const DataCell(Text('-')),
                             const DataCell(Text('SALDO ANTERIOR', style: TextStyle(fontWeight: FontWeight.bold))),

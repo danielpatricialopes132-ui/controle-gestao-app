@@ -179,7 +179,7 @@ class _RelatorioGerencialScreenState extends ConsumerState<RelatorioGerencialScr
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

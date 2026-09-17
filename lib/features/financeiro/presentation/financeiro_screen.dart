@@ -207,11 +207,10 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
-        withData: true,
       );
 
-      if (result.isNotEmpty && result.single.bytes != null) {
-        final bytes = result.single.bytes!;
+      if (result.isNotEmpty) {
+        final bytes = await result.single.readAsBytes();
         final base64String = base64Encode(bytes);
         _enviarParaBackend(context, base64String, 'application/pdf');
       }
