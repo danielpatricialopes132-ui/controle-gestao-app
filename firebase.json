@@ -1,0 +1,37 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "controle-gestao-ea7ad",
+          "appId": "1:487442618923:android:76daa2e2a5b3c51574286e",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "controle-gestao-ea7ad",
+          "configurations": {
+            "android": "1:487442618923:android:76daa2e2a5b3c51574286e",
+            "ios": "1:487442618923:ios:44a7e99d3438d16d74286e",
+            "web": "1:487442618923:web:5a4541ee0781d90274286e"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
