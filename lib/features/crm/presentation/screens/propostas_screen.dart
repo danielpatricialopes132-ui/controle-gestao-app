@@ -75,7 +75,7 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
                                 final tenantId = ref.read(tenantProvider);
                                 if (tenantId != null) {
                                   // Pegar nome da empresa real do tenant atual se possível, ou padrao
-                                  await PdfGeneratorService.imprimirOuCompartilhar(proposta, 'Jhoston Tec');
+                                  await PdfGeneratorService.imprimirOuCompartilhar(proposta, 'DPG Construtoras & Obras');
                                 }
                               },
                               icon: const Icon(Icons.picture_as_pdf, color: Colors.blue),
@@ -106,7 +106,7 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
                                 onPressed: () async {
                                   final tenantId = ref.read(tenantProvider);
                                   if (tenantId != null) {
-                                    await PdfGeneratorService.gerarECompartilharFatura(proposta, 'Jhoston Tec');
+                                    await PdfGeneratorService.gerarECompartilharFatura(proposta, 'DPG Construtoras & Obras');
                                   }
                                 },
                                 icon: const Icon(Icons.receipt_long),

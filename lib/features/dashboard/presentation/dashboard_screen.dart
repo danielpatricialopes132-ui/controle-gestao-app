@@ -114,10 +114,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-      drawer: isDesktop ? null : _buildDrawer(userData?['email'], isMaster),
+      drawer: isDesktop ? null : _buildDrawer(userData?['email'], isMaster, userData?['role'] ?? 'USER'),
       body: Row(
         children: [
-          if (isDesktop) _buildNavigationRail(isMaster),
+          if (isDesktop) _buildNavigationRail(isMaster, userData?['role'] ?? 'USER'),
           if (isDesktop) const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: _buildContent(_selectedIndex, isMaster),
@@ -129,7 +129,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildDrawer(String? email, bool isMaster) {
+  Widget _buildDrawer(String? email, bool isMaster, String role) {
+    bool hasRole(List<String> roles) => isMaster || roles.contains(role);
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -160,13 +161,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               );
             },
           ),
-          ..._buildMenuItens(isMaster),
+          ..._buildMenuItens(isMaster, role),
         ],
       ),
     );
   }
 
-  Widget _buildNavigationRail(bool isMaster) {
+  Widget _buildNavigationRail(bool isMaster, String role) {
+    bool hasRole(List<String> roles) => isMaster || roles.contains(role);
     return NavigationRail(
       selectedIndex: _selectedIndex,
       onDestinationSelected: _onItemTapped,
@@ -179,46 +181,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
       ),
       destinations: [
-        const NavigationRailDestination(
-          icon: Icon(Icons.dashboard_outlined),
-          selectedIcon: Icon(Icons.dashboard),
-          label: Text('Início'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.construction_outlined),
-          selectedIcon: Icon(Icons.construction),
-          label: Text('Obras'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.account_balance_wallet_outlined),
-          selectedIcon: Icon(Icons.account_balance_wallet),
-          label: Text('Financeiro'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.people_outline),
-          selectedIcon: Icon(Icons.people),
-          label: Text('RH'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.contacts_outlined),
-          selectedIcon: Icon(Icons.contacts),
-          label: Text('Agenda'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.inventory_2_outlined),
-          selectedIcon: Icon(Icons.inventory_2),
-          label: Text('Suprimentos'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.handshake_outlined),
-          selectedIcon: Icon(Icons.handshake),
-          label: Text('Vendas / CRM'),
-        ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.directions_car_outlined),
-          selectedIcon: Icon(Icons.directions_car),
-          label: Text('Frota'),
-        ),
+        if (hasRole(['ENGENHARIA', 'FINANCEIRO', 'ALMOXARIFE', 'RH']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: Text('Início'),
+          ),
+        if (hasRole(['ENGENHARIA']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.construction_outlined),
+            selectedIcon: Icon(Icons.construction),
+            label: Text('Obras'),
+          ),
+        if (hasRole(['FINANCEIRO']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(Icons.account_balance_wallet),
+            label: Text('Financeiro'),
+          ),
+        if (hasRole(['RH']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: Text('RH'),
+          ),
+        if (hasRole(['VENDAS']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.contacts_outlined),
+            selectedIcon: Icon(Icons.contacts),
+            label: Text('Agenda'),
+          ),
+        if (hasRole(['ALMOXARIFE', 'ENGENHARIA', 'FINANCEIRO']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.inventory_2_outlined),
+            selectedIcon: Icon(Icons.inventory_2),
+            label: Text('Suprimentos'),
+          ),
+        if (hasRole(['VENDAS']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.handshake_outlined),
+            selectedIcon: Icon(Icons.handshake),
+            label: Text('Vendas / CRM'),
+          ),
+        if (hasRole(['ENGENHARIA', 'ALMOXARIFE']))
+          const NavigationRailDestination(
+            icon: Icon(Icons.directions_car_outlined),
+            selectedIcon: Icon(Icons.directions_car),
+            label: Text('Frota'),
+          ),
         if (isMaster)
           const NavigationRailDestination(
             icon: Icon(Icons.admin_panel_settings_outlined),
@@ -258,92 +268,102 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  List<Widget> _buildMenuItens(bool isMaster) {
+  List<Widget> _buildMenuItens(bool isMaster, String role) {
+    bool hasRole(List<String> roles) => isMaster || roles.contains(role);
     return [
-      ListTile(
-        leading: const Icon(Icons.dashboard),
-        title: const Text('Início'),
-        selected: _selectedIndex == 0,
-        onTap: () {
-          _onItemTapped(0);
-          Navigator.pop(context); // Fechar drawer
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.construction),
-        title: const Text('Obras'),
-        selected: _selectedIndex == 1,
-        onTap: () {
-          _onItemTapped(1);
-          Navigator.pop(context);
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.account_balance_wallet),
-        title: const Text('Financeiro'),
-        selected: _selectedIndex == 2,
-        onTap: () {
-          _onItemTapped(2);
-          Navigator.pop(context);
-        },
-      ),
+      if (hasRole(['ENGENHARIA', 'FINANCEIRO', 'ALMOXARIFE', 'RH']))
+        ListTile(
+          leading: const Icon(Icons.dashboard),
+          title: const Text('Início'),
+          selected: _selectedIndex == 0,
+          onTap: () {
+            _onItemTapped(0);
+            Navigator.pop(context); // Fechar drawer
+          },
+        ),
+      if (hasRole(['ENGENHARIA']))
+        ListTile(
+          leading: const Icon(Icons.construction),
+          title: const Text('Obras'),
+          selected: _selectedIndex == 1,
+          onTap: () {
+            _onItemTapped(1);
+            Navigator.pop(context);
+          },
+        ),
+      if (hasRole(['FINANCEIRO']))
+        ListTile(
+          leading: const Icon(Icons.account_balance_wallet),
+          title: const Text('Financeiro'),
+          selected: _selectedIndex == 2,
+          onTap: () {
+            _onItemTapped(2);
+            Navigator.pop(context);
+          },
+        ),
       const Divider(),
-      ListTile(
-        leading: const Icon(Icons.people),
-        title: const Text('RH / Equipe'),
-        selected: _selectedIndex == 3,
-        onTap: () {
-          _onItemTapped(3);
-          Navigator.pop(context);
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.picture_as_pdf),
-        title: const Text('Relatórios'),
-        onTap: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const RelatoriosScreen()),
-          );
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.contacts),
-        title: const Text('Agenda'),
-        selected: _selectedIndex == 4,
-        onTap: () {
-          _onItemTapped(4);
-          Navigator.pop(context);
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.inventory_2),
-        title: const Text('Suprimentos'),
-        selected: _selectedIndex == 5,
-        onTap: () {
-          _onItemTapped(5);
-          Navigator.pop(context);
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.handshake),
-        title: const Text('Vendas / CRM'),
-        selected: _selectedIndex == 6,
-        onTap: () {
-          _onItemTapped(6);
-          Navigator.pop(context);
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.directions_car),
-        title: const Text('Frota e Máquinas'),
-        selected: _selectedIndex == 7,
-        onTap: () {
-          _onItemTapped(7);
-          Navigator.pop(context);
-        },
-      ),
+      if (hasRole(['RH']))
+        ListTile(
+          leading: const Icon(Icons.people),
+          title: const Text('RH / Equipe'),
+          selected: _selectedIndex == 3,
+          onTap: () {
+            _onItemTapped(3);
+            Navigator.pop(context);
+          },
+        ),
+      if (hasRole(['FINANCEIRO', 'ENGENHARIA']))
+        ListTile(
+          leading: const Icon(Icons.picture_as_pdf),
+          title: const Text('Relatórios'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RelatoriosScreen()),
+            );
+          },
+        ),
+      if (hasRole(['VENDAS']))
+        ListTile(
+          leading: const Icon(Icons.contacts),
+          title: const Text('Agenda'),
+          selected: _selectedIndex == 4,
+          onTap: () {
+            _onItemTapped(4);
+            Navigator.pop(context);
+          },
+        ),
+      if (hasRole(['ALMOXARIFE', 'ENGENHARIA', 'FINANCEIRO']))
+        ListTile(
+          leading: const Icon(Icons.inventory_2),
+          title: const Text('Suprimentos'),
+          selected: _selectedIndex == 5,
+          onTap: () {
+            _onItemTapped(5);
+            Navigator.pop(context);
+          },
+        ),
+      if (hasRole(['VENDAS']))
+        ListTile(
+          leading: const Icon(Icons.handshake),
+          title: const Text('Vendas / CRM'),
+          selected: _selectedIndex == 6,
+          onTap: () {
+            _onItemTapped(6);
+            Navigator.pop(context);
+          },
+        ),
+      if (hasRole(['ENGENHARIA', 'ALMOXARIFE']))
+        ListTile(
+          leading: const Icon(Icons.directions_car),
+          title: const Text('Frota e Máquinas'),
+          selected: _selectedIndex == 7,
+          onTap: () {
+            _onItemTapped(7);
+            Navigator.pop(context);
+          },
+        ),
       ListTile(
         leading: const Icon(Icons.help_outline),
         title: const Text('Ajuda & Manual'),

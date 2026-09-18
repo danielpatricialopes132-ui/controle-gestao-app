@@ -109,7 +109,7 @@ class _GeminiChatDialogState extends ConsumerState<GeminiChatDialog> {
                   children: [
                     Icon(Icons.auto_awesome, color: Colors.blueAccent),
                     SizedBox(width: 8),
-                    Text('Assistente Jhoston Tec', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text('Assistente DPG Construtoras', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))

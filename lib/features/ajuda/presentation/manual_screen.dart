@@ -14,7 +14,7 @@ class ManualScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bem-vindo ao ERP Jhoston Tec', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+            Text('Bem-vindo ao ERP DPG Construtoras & Obras', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
             const SizedBox(height: 16),
             const Text('Este sistema foi desenvolvido para facilitar a gestão financeira, de obras e de recursos humanos da sua empresa. Abaixo, você encontrará um guia rápido das principais funcionalidades.'),
             const SizedBox(height: 32),
