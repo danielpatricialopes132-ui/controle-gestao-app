@@ -1,99 +1,39 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers/api_client_provider.dart';
 
-// Obras
-final obrasProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final apiClient = ref.watch(apiClientProvider);
-  
-  try {
-    final response = await apiClient.get('/obras');
-    if (response['success'] == true) {
-      return List<Map<String, dynamic>>.from(response['data']);
-    }
-    throw Exception(response['error'] ?? 'Erro desconhecido');
-  } catch (e) {
-    throw Exception('Falha ao carregar obras: $e');
-  }
+final funcionariosProvider = FutureProvider<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/rh/funcionarios');
+  return response as List<dynamic>;
 });
 
-// Funcionários
-final funcionariosProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final apiClient = ref.watch(apiClientProvider);
-  
-  try {
-    final response = await apiClient.get('/funcionarios');
-    if (response['success'] == true) {
-      return List<Map<String, dynamic>>.from(response['data']);
-    }
-    throw Exception(response['error'] ?? 'Erro desconhecido');
-  } catch (e) {
-    throw Exception('Falha ao carregar funcionários: $e');
-  }
+final valesProvider = FutureProvider<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/rh/vales');
+  return response as List<dynamic>;
 });
 
-class FuncionarioController extends Notifier<AsyncValue<void>> {
+class RhController extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() {
     return const AsyncData(null);
   }
 
-  Future<void> addFuncionario({
-    required String nome,
-    required String cargo,
-    String? salario,
-    String? valorDiariaMotorista,
-  }) async {
+  Future<void> saveFuncionario(Map<String, dynamic> data, {String? id}) async {
     state = const AsyncLoading();
     try {
-      final apiClient = ref.read(apiClientProvider);
-      
-      final body = {
-        'nome': nome,
-        'cargo': cargo,
-        'salario': (salario != null && salario.isNotEmpty) ? salario.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
-        'valorDiariaMotorista': (valorDiariaMotorista != null && valorDiariaMotorista.isNotEmpty) ? valorDiariaMotorista.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
-      };
-      
-      final response = await apiClient.post('/funcionarios', body);
-      
-      if (response['success'] == true) {
-        state = const AsyncData(null);
-        // Atualiza a lista
-        ref.invalidate(funcionariosProvider);
+      final api = ref.read(apiClientProvider);
+      dynamic response;
+      if (id == null) {
+        response = await api.post('/rh/funcionarios', data);
       } else {
-        throw Exception(response['error'] ?? 'Erro desconhecido');
+        response = await api.put('/rh/funcionarios/$id', data);
       }
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
-      rethrow;
-    }
-  }
-
-  Future<void> updateFuncionario({
-    required String id,
-    required String nome,
-    required String cargo,
-    String? salario,
-    String? valorDiariaMotorista,
-  }) async {
-    state = const AsyncLoading();
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      
-      final body = {
-        'nome': nome,
-        'cargo': cargo,
-        'salario': (salario != null && salario.isNotEmpty) ? salario.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
-        'valorDiariaMotorista': (valorDiariaMotorista != null && valorDiariaMotorista.isNotEmpty) ? valorDiariaMotorista.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
-      };
-      
-      final response = await apiClient.put('/rh/funcionarios/$id', body);
-      
       if (response['success'] == true) {
         state = const AsyncData(null);
         ref.invalidate(funcionariosProvider);
       } else {
-        throw Exception(response['error'] ?? 'Erro desconhecido');
+        throw Exception(response['error']);
       }
     } catch (e) {
       state = AsyncError(e, StackTrace.current);
@@ -104,58 +44,57 @@ class FuncionarioController extends Notifier<AsyncValue<void>> {
   Future<void> deleteFuncionario(String id) async {
     state = const AsyncLoading();
     try {
-      final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.delete('/rh/funcionarios/$id');
-      
+      final api = ref.read(apiClientProvider);
+      final response = await api.delete('/rh/funcionarios/$id');
       if (response['success'] == true) {
         state = const AsyncData(null);
         ref.invalidate(funcionariosProvider);
       } else {
-        throw Exception(response['error'] ?? 'Erro desconhecido');
+        throw Exception(response['error']);
       }
     } catch (e) {
       state = AsyncError(e, StackTrace.current);
       rethrow;
     }
   }
-}
 
-final funcionarioControllerProvider = NotifierProvider<FuncionarioController, AsyncValue<void>>(() {
-  return FuncionarioController();
-});
-
-class DiarioObraController extends Notifier<AsyncValue<void>> {
-  @override
-  AsyncValue<void> build() {
-    return const AsyncData(null);
+  Future<List<dynamic>> getApontamentos(String obraId, String dataIso) async {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get('/rh/apontamentos?obraId=$obraId&data=$dataIso');
+    return response as List<dynamic>;
   }
 
-  Future<void> salvarDiarioBatch({
-    required String obraId,
-    required DateTime data,
-    required List<Map<String, dynamic>> presencas,
-  }) async {
+  Future<void> saveApontamentosLote(String obraId, String dataIso, List<Map<String, dynamic>> apontamentos) async {
     state = const AsyncLoading();
     try {
-      final apiClient = ref.read(apiClientProvider);
-      
-      final dataIso = data.toIso8601String();
-      
-      final body = {
-        'presencas': presencas.map((p) => {
-          'funcionarioId': p['funcionarioId'],
-          'status': p['status'],
-          'obraId': obraId,
-          'data': dataIso,
-        }).toList()
+      final api = ref.read(apiClientProvider);
+      final payload = {
+        'obraId': obraId,
+        'data': dataIso,
+        'apontamentos': apontamentos,
       };
-      
-      final response = await apiClient.post('/presencas/batch', body);
-      
+      final response = await api.post('/rh/apontamentos', payload);
       if (response['success'] == true) {
         state = const AsyncData(null);
       } else {
-        throw Exception(response['error'] ?? 'Erro desconhecido ao salvar diário');
+        throw Exception(response['error']);
+      }
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<void> addVale(Map<String, dynamic> data) async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post('/rh/vales', data);
+      if (response['success'] == true) {
+        state = const AsyncData(null);
+        ref.invalidate(valesProvider);
+      } else {
+        throw Exception(response['error']);
       }
     } catch (e) {
       state = AsyncError(e, StackTrace.current);
@@ -164,8 +103,6 @@ class DiarioObraController extends Notifier<AsyncValue<void>> {
   }
 }
 
-final diarioObraControllerProvider = NotifierProvider<DiarioObraController, AsyncValue<void>>(() {
-  return DiarioObraController();
+final rhControllerProvider = NotifierProvider<RhController, AsyncValue<void>>(() {
+  return RhController();
 });
-
-

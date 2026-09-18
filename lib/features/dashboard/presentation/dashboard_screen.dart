@@ -13,6 +13,7 @@ import '../../relatorios/presentation/relatorios_screen.dart';
 import '../../relatorios/presentation/livro_caixa_screen.dart';
 import '../../suprimentos/presentation/screens/suprimentos_dashboard_screen.dart';
 import '../../crm/presentation/screens/crm_dashboard_screen.dart';
+import '../../rh/presentation/rh_dashboard_screen.dart';
 import '../../frota/presentation/screens/frota_screen.dart';
 import '../../auth/providers/tenant_provider.dart';
 import '../../ai/presentation/gemini_chat_widget.dart';
@@ -382,7 +383,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 2:
         return const FinanceiroScreen();
       case 3:
-        return const RHScreen();
+        return const RhDashboardScreen();
       case 4:
         return const AgendaScreen();
       case 5:
