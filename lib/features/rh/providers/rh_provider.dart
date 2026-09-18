@@ -50,8 +50,8 @@ class FuncionarioController extends Notifier<AsyncValue<void>> {
       final body = {
         'nome': nome,
         'cargo': cargo,
-        if (salario != null && salario.isNotEmpty) 'salario': salario.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
-        if (valorDiariaMotorista != null && valorDiariaMotorista.isNotEmpty) 'valorDiariaMotorista': valorDiariaMotorista.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
+        'salario': (salario != null && salario.isNotEmpty) ? salario.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
+        'valorDiariaMotorista': (valorDiariaMotorista != null && valorDiariaMotorista.isNotEmpty) ? valorDiariaMotorista.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
       };
       
       final response = await apiClient.post('/funcionarios', body);
@@ -83,8 +83,8 @@ class FuncionarioController extends Notifier<AsyncValue<void>> {
       final body = {
         'nome': nome,
         'cargo': cargo,
-        if (salario != null && salario.isNotEmpty) 'valorPadrao': salario.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
-        if (valorDiariaMotorista != null && valorDiariaMotorista.isNotEmpty) 'valorPadrao': valorDiariaMotorista.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
+        'salario': (salario != null && salario.isNotEmpty) ? salario.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
+        'valorDiariaMotorista': (valorDiariaMotorista != null && valorDiariaMotorista.isNotEmpty) ? valorDiariaMotorista.replaceAll(RegExp(r'[R\$\s]'), '').replaceAll('.', '').replaceAll(',', '.').trim() : null,
       };
       
       final response = await apiClient.put('/rh/funcionarios/$id', body);

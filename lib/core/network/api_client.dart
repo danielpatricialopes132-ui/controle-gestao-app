@@ -2,16 +2,20 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:flutter/foundation.dart';
+
 class ApiClient {
-  // URL de Produção na Render
-  static const String baseUrl = 'https://controle-gestao-api.onrender.com/api'; 
+  // URL da API (Local em debug, Render em produção)
+  static const String baseUrl = kReleaseMode 
+      ? 'https://controle-gestao-api.onrender.com/api'
+      : 'http://localhost:3000/api'; 
   final FirebaseAuth _auth;
 
   final String? tenantOverride;
 
   ApiClient(this._auth, {this.tenantOverride});
 
-  Future<Map<String, dynamic>> get(String endpoint) async {
+  Future<dynamic> get(String endpoint) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('Usuário não autenticado');
@@ -40,7 +44,7 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body) async {
+  Future<dynamic> post(String endpoint, Map<String, dynamic> body) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('Usuário não autenticado');
@@ -70,7 +74,7 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> body) async {
+  Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('Usuário não autenticado');
@@ -100,7 +104,7 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> delete(String endpoint) async {
+  Future<dynamic> delete(String endpoint) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('Usuário não autenticado');
@@ -123,7 +127,10 @@ class ApiClient {
     );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body);
+      if (response.body.isNotEmpty) {
+        return jsonDecode(response.body);
+      }
+      return null;
     } else {
       throw Exception('Erro na requisição: ${response.statusCode} - ${response.body}');
     }

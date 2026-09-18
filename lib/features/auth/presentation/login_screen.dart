@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLogin = true;
+  bool _obscurePassword = true;
 
   Future<void> _submit() async {
     final email = _emailController.text;
@@ -239,9 +240,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
-                          suffixIcon: const Icon(Icons.remove_red_eye_outlined, size: 20, color: Colors.black45),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              size: 20,
+                              color: Colors.black45,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                       ),
                       
                       const SizedBox(height: 32),

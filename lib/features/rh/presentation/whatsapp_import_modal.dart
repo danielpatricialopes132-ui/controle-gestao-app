@@ -138,7 +138,7 @@ class _WhatsAppImportModalState extends ConsumerState<WhatsAppImportModal> {
             const SizedBox(height: 16),
             if (!_isParsed) ...[
               DropdownButtonFormField<String>(
-                value: _importedObraId,
+                initialValue: _importedObraId,
                 decoration: const InputDecoration(labelText: 'Obra Associada (Obrigatório)', border: OutlineInputBorder()),
                 items: _obras.map((o) => DropdownMenuItem<String>(value: o['id'], child: Text(o['nome']))).toList(),
                 onChanged: (val) => setState(() => _importedObraId = val),

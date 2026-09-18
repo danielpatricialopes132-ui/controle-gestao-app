@@ -126,7 +126,7 @@ class LivroCaixaScreen extends ConsumerWidget {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+                      headingRowColor: WidgetStateProperty.all(Colors.grey[200]),
                       columns: const [
                         DataColumn(label: Text('Data')),
                         DataColumn(label: Text('Histórico')),
