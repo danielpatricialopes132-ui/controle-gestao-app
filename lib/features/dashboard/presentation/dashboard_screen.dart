@@ -11,6 +11,9 @@ import '../../financeiro/presentation/financeiro_screen.dart';
 import '../../admin/presentation/admin_screen.dart';
 import '../../relatorios/presentation/relatorios_screen.dart';
 import '../../relatorios/presentation/livro_caixa_screen.dart';
+import '../../suprimentos/presentation/screens/suprimentos_dashboard_screen.dart';
+import '../../crm/presentation/screens/crm_dashboard_screen.dart';
+import '../../frota/presentation/screens/frota_screen.dart';
 import '../../auth/providers/tenant_provider.dart';
 import '../../ai/presentation/gemini_chat_widget.dart';
 import '../../ajuda/presentation/manual_screen.dart';
@@ -200,6 +203,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           selectedIcon: Icon(Icons.contacts),
           label: Text('Agenda'),
         ),
+        const NavigationRailDestination(
+          icon: Icon(Icons.inventory_2_outlined),
+          selectedIcon: Icon(Icons.inventory_2),
+          label: Text('Suprimentos'),
+        ),
+        const NavigationRailDestination(
+          icon: Icon(Icons.handshake_outlined),
+          selectedIcon: Icon(Icons.handshake),
+          label: Text('Vendas / CRM'),
+        ),
+        const NavigationRailDestination(
+          icon: Icon(Icons.directions_car_outlined),
+          selectedIcon: Icon(Icons.directions_car),
+          label: Text('Frota'),
+        ),
         if (isMaster)
           const NavigationRailDestination(
             icon: Icon(Icons.admin_panel_settings_outlined),
@@ -299,6 +317,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         },
       ),
       ListTile(
+        leading: const Icon(Icons.inventory_2),
+        title: const Text('Suprimentos'),
+        selected: _selectedIndex == 5,
+        onTap: () {
+          _onItemTapped(5);
+          Navigator.pop(context);
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.handshake),
+        title: const Text('Vendas / CRM'),
+        selected: _selectedIndex == 6,
+        onTap: () {
+          _onItemTapped(6);
+          Navigator.pop(context);
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.directions_car),
+        title: const Text('Frota e Máquinas'),
+        selected: _selectedIndex == 7,
+        onTap: () {
+          _onItemTapped(7);
+          Navigator.pop(context);
+        },
+      ),
+      ListTile(
         leading: const Icon(Icons.help_outline),
         title: const Text('Ajuda & Manual'),
         onTap: () {
@@ -314,9 +359,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ListTile(
           leading: const Icon(Icons.admin_panel_settings),
           title: const Text('Painel Admin'),
-          selected: _selectedIndex == 5,
+          selected: _selectedIndex == 7,
           onTap: () {
-            _onItemTapped(5);
+            _onItemTapped(7);
             Navigator.pop(context);
           },
         ),
@@ -341,6 +386,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 4:
         return const AgendaScreen();
       case 5:
+        return const SuprimentosDashboardScreen();
+      case 6:
+        return const CrmDashboardScreen();
+      case 7:
+        return const FrotaScreen();
+      case 8:
         if (isMaster) return const AdminScreen();
         return const Center(child: Text('Página não encontrada'));
       default:

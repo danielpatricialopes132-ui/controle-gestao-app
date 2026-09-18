@@ -12,7 +12,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+
 import 'widgets/calculadora_financeira_modal.dart';
+import 'screens/ofx_import_screen.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
@@ -73,6 +76,11 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             icon: const Icon(Icons.calculate),
             tooltip: 'Calculadora',
             onPressed: () => CalculadoraFinanceiraModal.show(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.import_export),
+            tooltip: 'Conciliação OFX',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfxImportScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -298,11 +306,22 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                       t['categoriaFk']?['descricao'] ?? t['categoriaFk']?['nome'] ?? 'Sem Categoria',
                       style: const TextStyle(fontSize: 12),
                     ),
-                    if (t['contaBancaria'] != null)
-                      Text(
-                        '🏦 ${t['contaBancaria']['nome']}',
-                        style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
-                      ),
+                    Row(
+                      children: [
+                        if (t['contaBancaria'] != null)
+                          Text(
+                            '🏦 ${t['contaBancaria']['nome']} ',
+                            style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
+                          ),
+                        if (t['isConciliada'] == true)
+                          Container(
+                            margin: const EdgeInsets.only(left: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
+                            child: const Text('OFX', style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold)),
+                          )
+                      ],
+                    ),
                   ],
                 ),
                 trailing: Row(

@@ -159,6 +159,40 @@ class FinanceiroController extends Notifier<AsyncValue<void>> {
       rethrow;
     }
   }
+
+  Future<List<dynamic>> uploadOfx(String base64, String mimeType, String fileName) async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post('/financeiro/ofx', {
+        'base64': base64,
+        'mimeType': mimeType,
+        'fileName': fileName,
+      });
+      state = const AsyncData(null);
+      return response['transactions'] as List<dynamic>;
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<void> conciliarTransacao(String transacaoId, String ofxId, String data) async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.post('/financeiro/conciliar', {
+        'transacaoId': transacaoId,
+        'ofxId': ofxId,
+        'data': data,
+      });
+      state = const AsyncData(null);
+      ref.invalidate(transacoesProvider);
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
 }
 
 final financeiroControllerProvider = NotifierProvider<FinanceiroController, AsyncValue<void>>(() {

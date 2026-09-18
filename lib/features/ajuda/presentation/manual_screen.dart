@@ -54,15 +54,35 @@ class ManualScreen extends StatelessWidget {
             
             _buildSection(
               context,
+              icon: Icons.inventory_2,
+              title: '5. Suprimentos (Compras e Estoque)',
+              content: 'Gestão de materiais e cadeia de suprimentos da empresa.\n'
+              '- Catálogo de Produtos: Cadastre os insumos com suas unidades de medida e preços base.\n'
+              '- Fornecedores: Base de dados dos seus parceiros de negócios.\n'
+              '- Ordens de Compra: Crie e aprove ordens de materiais para as obras. Ao marcar uma ordem como "ENTREGUE", o sistema provisiona automaticamente a despesa no módulo Financeiro da Obra.',
+            ),
+            
+            _buildSection(
+              context,
+              icon: Icons.handshake,
+              title: '6. Vendas e CRM',
+              content: 'O módulo de Vendas ajuda a prospectar clientes e fechar negócios de forma automatizada:\n'
+              '- Clientes: Cadastre dados de contato e faturamento.\n'
+              '- Orçamentos: Monte propostas detalhadas. Se o cliente aprovar, o sistema cria a "Obra" automaticamente!\n'
+              '- Faturas em PDF: Gere orçamentos profissionais e faturas em PDF em 1 clique.',
+            ),
+            
+            _buildSection(
+              context,
               icon: Icons.picture_as_pdf,
-              title: '5. Relatórios',
+              title: '7. Relatórios',
               content: 'Geração de demonstrativos financeiros (DRE), relatórios de obras, saldos e ponto dos colaboradores. Os relatórios podem ser impressos ou enviados via WhatsApp.',
             ),
             
             _buildSection(
               context,
               icon: Icons.auto_awesome,
-              title: '6. Assistente Virtual (IA)',
+              title: '8. Assistente Virtual (IA)',
               content: 'Exclusivo para perfis MASTER, o botão flutuante abre o Assistente de Inteligência Artificial para tirar dúvidas rápidas sobre lançamentos contábeis ou análise de dados.',
             ),
           ],
