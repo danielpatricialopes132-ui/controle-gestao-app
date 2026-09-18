@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'produtos_screen.dart';
 import 'fornecedores_screen.dart';
 import 'ordens_compra_screen.dart';
+import 'estoque_screen.dart';
 
 class SuprimentosDashboardScreen extends StatelessWidget {
   const SuprimentosDashboardScreen({super.key});
@@ -52,7 +53,7 @@ class SuprimentosDashboardScreen extends StatelessWidget {
               icon: Icons.store,
               color: Colors.purple,
               onTap: () {
-                // TODO: Navigate to EstoqueScreen
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const EstoqueScreen()));
               },
             ),
           ],

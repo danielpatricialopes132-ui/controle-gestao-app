@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../crm/providers/crm_provider.dart';
 import '../data/models/cliente.dart';
+import 'package:flutter/services.dart';
+import '../../obras/providers/obra_ged_provider.dart';
 
 class ClientesScreen extends ConsumerStatefulWidget {
   const ClientesScreen({super.key});
@@ -101,7 +103,27 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   leading: const CircleAvatar(child: Icon(Icons.person)),
                   title: Text(cliente.nome),
                   subtitle: Text(cliente.telefone ?? 'Sem telefone'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (val) async {
+                      if (val == 'portal') {
+                        try {
+                          final token = await ref.read(obraGedControllerProvider.notifier).gerarLinkMagicoPortal(cliente.id);
+                          final link = 'http://localhost:3000/portal?token=\$token';
+                          await Clipboard.setData(ClipboardData(text: link));
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Link copiado: \$link')));
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: \$e')));
+                          }
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(value: 'portal', child: Text('Gerar Link do Portal')),
+                    ],
+                  ),
                 );
               },
             ),

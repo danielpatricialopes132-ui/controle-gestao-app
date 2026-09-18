@@ -46,10 +46,11 @@ class ManualScreen extends StatelessWidget {
             _buildSection(
               context,
               icon: Icons.people,
-              title: '4. Recursos Humanos (RH)',
-              content: 'Aqui você gerencia seus colaboradores.\n'
-              '- Controle de Ponto: Lançamento de escalas de trabalho e validação diária. Você também pode importar a escala pelo WhatsApp colando o texto na ferramenta de importação.\n'
-              '- Cadastro: Adicione informações como função, salário base e contatos.',
+              title: '4. Recursos Humanos e Empreiteiros',
+              content: 'Aqui você gerencia sua equipe (CLT, Diaristas e Empreiteiros PJ).\n'
+              '- Apontamento Simplificado: Gere a folha do diário de obra de forma rápida e em lote para todos os presentes na obra.\n'
+              '- Vales e Adiantamentos: Lance adiantamentos que já geram uma Despesa automática no seu fluxo de caixa.\n'
+              '- Equipe: Cadastro rápido unificado, com salários e chaves PIX.',
             ),
             
             _buildSection(
@@ -71,19 +72,38 @@ class ManualScreen extends StatelessWidget {
               '- Orçamentos: Monte propostas detalhadas. Se o cliente aprovar, o sistema cria a "Obra" automaticamente!\n'
               '- Faturas em PDF: Gere orçamentos profissionais e faturas em PDF em 1 clique.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.directions_car,
+              title: '7. Frota e Máquinas',
+              content: 'Controle os ativos pesados e veículos da sua construtora.\n'
+              '- Equipamentos: Cadastro de máquinas e custo diário padrão.\n'
+              '- Alocação: Envie as máquinas para o canteiro e controle o tempo de estadia (gerando custo gerencial automático).\n'
+              '- Manutenções Preventivas: Agende por data a próxima troca de óleo ou revisão da máquina.',
+            ),
             
             _buildSection(
               context,
               icon: Icons.picture_as_pdf,
-              title: '7. Relatórios',
+              title: '8. Relatórios',
               content: 'Geração de demonstrativos financeiros (DRE), relatórios de obras, saldos e ponto dos colaboradores. Os relatórios podem ser impressos ou enviados via WhatsApp.',
             ),
             
             _buildSection(
               context,
               icon: Icons.auto_awesome,
-              title: '8. Assistente Virtual (IA)',
+              title: '9. Assistente Virtual (IA)',
               content: 'Exclusivo para perfis MASTER, o botão flutuante abre o Assistente de Inteligência Artificial para tirar dúvidas rápidas sobre lançamentos contábeis ou análise de dados.',
+            ),
+            
+            _buildSection(
+              context,
+              icon: Icons.school,
+              title: '10. Ambiente de Treinamento (TESTE S/A)',
+              content: 'Precisa treinar um novo funcionário sem afetar os dados reais da sua empresa? Utilize o ambiente de testes.\n'
+              '- Acesse com o login: aluno@testesa.com.br\n'
+              '- O sistema carregará a empresa fictícia "TESTE S/A - Ambiente de Curso". Nela, você pode cadastrar obras, lançar notas e testar todo o ERP sem medo.',
             ),
           ],
         ),

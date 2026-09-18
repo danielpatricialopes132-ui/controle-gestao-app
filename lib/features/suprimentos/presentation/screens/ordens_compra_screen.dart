@@ -65,13 +65,22 @@ class _OrdensCompraScreenState extends ConsumerState<OrdensCompraScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (ordem.status != 'ENTREGUE')
+                            if (ordem.status == 'PENDENTE')
+                              ElevatedButton.icon(
+                                onPressed: () => _atualizarStatus(ordem.id, 'APROVADA'),
+                                icon: const Icon(Icons.thumb_up),
+                                label: const Text('Aprovar OC'),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                              ),
+                            if (ordem.status == 'APROVADA')
                               ElevatedButton.icon(
                                 onPressed: () => _atualizarStatus(ordem.id, 'ENTREGUE'),
-                                icon: const Icon(Icons.check),
-                                label: const Text('Marcar Entregue'),
+                                icon: const Icon(Icons.local_shipping),
+                                label: const Text('Registrar Entrega'),
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                               ),
+                            if (ordem.status == 'ENTREGUE')
+                              const Text('Estoque Atualizado', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                           ],
                         )
                       ],

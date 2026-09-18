@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'adendo_modal.dart';
 import '../providers/obras_detalhe_provider.dart';
+import 'ged_aba.dart';
+import 'cronograma_aba.dart';
 
 class ObraDetalhesScreen extends ConsumerStatefulWidget {
   final String obraId;
@@ -19,7 +21,7 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -35,9 +37,12 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
           labelColor: Colors.indigo,
           unselectedLabelColor: Colors.grey,
           indicatorColor: Colors.indigo,
+          isScrollable: true,
           tabs: const [
             Tab(text: 'Dashboard Financeiro', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Aditivos e Contratos', icon: Icon(Icons.assignment)),
+            Tab(text: 'Documentos (GED)', icon: Icon(Icons.folder)),
+            Tab(text: 'Cronograma', icon: Icon(Icons.calendar_month)),
           ],
         ),
       ),
@@ -46,6 +51,8 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
         children: [
           _buildDashboardTab(),
           _buildAditivosTab(),
+          GedAba(obraId: widget.obraId),
+          CronogramaAba(obraId: widget.obraId),
         ],
       ),
     );
