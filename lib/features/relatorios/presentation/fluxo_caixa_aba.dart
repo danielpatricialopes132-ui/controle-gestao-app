@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/relatorios_provider.dart';
+import '../services/relatorios_pdf_service.dart';
 
 class FluxoCaixaAba extends ConsumerWidget {
   const FluxoCaixaAba({super.key});
@@ -26,7 +27,26 @@ class FluxoCaixaAba extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Projeção de Fluxo de Caixa (6 meses)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Projeção de Fluxo de Caixa (6 meses)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      final mappedData = data.map((item) => {
+                        'mesAno': item['mesAno'],
+                        'receitas': (item['receitasRealizadas'] ?? 0) + (item['receitasProjetadas'] ?? 0),
+                        'despesas': (item['despesasRealizadas'] ?? 0) + (item['despesasProjetadas'] ?? 0),
+                        'saldo': item['saldoTotalPrevisto'] ?? 0,
+                      }).toList();
+                      RelatoriosPdfService.imprimirFluxoCaixa(mappedData);
+                    },
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('Exportar PDF'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               const Wrap(
                 spacing: 16,

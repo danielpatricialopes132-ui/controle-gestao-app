@@ -86,8 +86,9 @@ class ManualScreen extends StatelessWidget {
             _buildSection(
               context,
               icon: Icons.picture_as_pdf,
-              title: '8. Relatórios',
-              content: 'Geração de demonstrativos financeiros (DRE), relatórios de obras, saldos e ponto dos colaboradores. Os relatórios podem ser impressos ou enviados via WhatsApp.',
+              title: '8. Relatórios e Exportações em PDF',
+              content: 'Geração de demonstrativos financeiros (DRE), relatórios de obras, saldos e ponto dos colaboradores.\n'
+              '- PDFs Corporativos: Você pode exportar seu DRE, Fluxo de Caixa, RDO (Diário de Obra) com fotos e Extrato do Empreiteiro em PDF com um clique, prontos para enviar via WhatsApp.',
             ),
             
             _buildSection(
@@ -96,11 +97,30 @@ class ManualScreen extends StatelessWidget {
               title: '9. Assistente Virtual (IA)',
               content: 'Exclusivo para perfis MASTER, o botão flutuante abre o Assistente de Inteligência Artificial para tirar dúvidas rápidas sobre lançamentos contábeis ou análise de dados.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.wifi_off,
+              title: '10. Modo Offline e PWA / Mobile',
+              content: 'O sistema funciona sem internet?\n'
+              'Sim! No Android ou pelo PWA instalado, você pode apontar horas, bater fotos de diário de obras, e dar baixa no estoque em canteiros sem sinal (Offline-First). Os dados serão enviados automaticamente assim que o celular reconectar ao 4G ou Wi-Fi.\n\n'
+              'Como instalar no celular?\n'
+              'No navegador, busque a opção "Adicionar à Tela Inicial" (PWA) ou baixe o APK para Android para ter acesso a todos os recursos offline.',
+            ),
+            
+            _buildSection(
+              context,
+              icon: Icons.security,
+              title: '11. Segurança e Perfis (RBAC)',
+              content: 'Controle de acesso granular baseado em funções (Role-Based Access Control).\n'
+              '- Perfis como ALMOXARIFE não têm acesso aos módulos financeiros e de RH.\n'
+              '- O sistema conta com uma Trilha de Auditoria que registra aprovações de ordens de compra e pagamentos.',
+            ),
             
             _buildSection(
               context,
               icon: Icons.school,
-              title: '10. Ambiente de Treinamento (TESTE S/A)',
+              title: '11. Ambiente de Treinamento (TESTE S/A)',
               content: 'Precisa treinar um novo funcionário sem afetar os dados reais da sua empresa? Utilize o ambiente de testes.\n'
               '- Acesse com o login: aluno@testesa.com.br\n'
               '- O sistema carregará a empresa fictícia "TESTE S/A - Ambiente de Curso". Nela, você pode cadastrar obras, lançar notas e testar todo o ERP sem medo.',

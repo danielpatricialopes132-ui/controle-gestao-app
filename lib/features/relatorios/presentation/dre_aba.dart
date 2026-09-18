@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/relatorios_provider.dart';
+import '../services/relatorios_pdf_service.dart';
 
 class DREAba extends ConsumerWidget {
   const DREAba({super.key});
@@ -27,6 +28,19 @@ class DREAba extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final mesAno = ref.read(relatorioMesAnoProvider);
+                    RelatoriosPdfService.imprimirDRE(data, mesAno);
+                  },
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Exportar PDF'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                ),
+              ),
+              const SizedBox(height: 16),
               _buildResumoCard(resumo, formatCurrency, formatPercent),
               const SizedBox(height: 24),
               _buildSection('1. Receitas Operacionais Brutas', receitas, formatCurrency, isReceita: true),

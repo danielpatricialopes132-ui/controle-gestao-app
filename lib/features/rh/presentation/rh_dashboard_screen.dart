@@ -4,6 +4,7 @@ import '../providers/rh_provider.dart';
 import 'widgets/funcionario_modal.dart';
 import 'widgets/vale_modal.dart';
 import 'widgets/apontamentos_aba.dart';
+import '../services/extrato_pdf_service.dart';
 import 'package:intl/intl.dart';
 
 class RhDashboardScreen extends ConsumerStatefulWidget {
@@ -94,6 +95,14 @@ class _RhDashboardScreenState extends ConsumerState<RhDashboardScreen> with Sing
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.picture_as_pdf, color: Colors.blueGrey),
+                      tooltip: 'Extrato de Vales',
+                      onPressed: () async {
+                        final vales = await ref.read(valesProvider.future);
+                        ExtratoPdfService.imprimirExtrato(f, vales);
+                      },
+                    ),
                     IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () => FuncionarioModal.show(context, funcionario: f),

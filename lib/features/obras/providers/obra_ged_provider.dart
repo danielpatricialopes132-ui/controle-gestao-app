@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/tenant_provider.dart';
+import '../../../core/offline/sync_manager.dart';
 
 class ObraGedController extends StateNotifier<AsyncValue<void>> {
   final Ref ref;
@@ -54,6 +55,22 @@ class ObraGedController extends StateNotifier<AsyncValue<void>> {
       }
       state = const AsyncData(null);
     } catch (e, st) {
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+        try {
+          final syncManager = ref.read(syncManagerProvider);
+          await syncManager.enqueue('POST', '/obras/$obraId/documentos', {
+            'nome': nome,
+            'tipo': tipo,
+            'base64': base64,
+            'mimeType': mimeType,
+          });
+          state = const AsyncData(null); // Sucesso "Offline"
+          return;
+        } catch (syncError) {
+          state = AsyncError(syncError, st);
+          rethrow;
+        }
+      }
       state = AsyncError(e, st);
       rethrow;
     }

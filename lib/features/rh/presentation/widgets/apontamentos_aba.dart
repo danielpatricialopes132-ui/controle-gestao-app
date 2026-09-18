@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/rh_provider.dart';
 import '../../../obras/providers/obras_provider.dart';
+import '../../../obras/providers/obra_ged_provider.dart';
+import '../../../obras/services/rdo_pdf_service.dart';
 import 'package:intl/intl.dart';
 
 class ApontamentosAba extends ConsumerStatefulWidget {
@@ -171,11 +173,40 @@ class _ApontamentosAbaState extends ConsumerState<ApontamentosAba> {
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.save),
-              label: const Text('Salvar Diário de Obra'),
-              onPressed: _salvarLote,
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.save),
+                    label: const Text('Salvar Diário'),
+                    onPressed: _salvarLote,
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('Exportar RDO'),
+                    onPressed: () async {
+                      if (_obraSelecionada == null) return;
+                      // Buscar fotos do GED
+                      try {
+                        final todosDocs = await ref.read(documentosObraProvider(_obraSelecionada!).future);
+                        final fotos = todosDocs.where((d) => d['tipo'] == 'FOTO').toList();
+                        
+                        final obraSelecionadaObj = obrasAsync.value?.firstWhere((o) => o['id'] == _obraSelecionada);
+                        final nomeObra = obraSelecionadaObj?['nome'] ?? 'Obra';
+
+                        await RdoPdfService.imprimirRdo(nomeObra, _dataSelecionada, _apontamentosLocal, fotos);
+                      } catch (e) {
+                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao exportar: $e')));
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                  ),
+                ),
+              ],
             ),
           )
         ] else if (_carregando) ...[

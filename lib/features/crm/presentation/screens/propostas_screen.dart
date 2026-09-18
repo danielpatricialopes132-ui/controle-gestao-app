@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../crm/providers/crm_provider.dart';
+import '../../crm/providers/crm_provider.dart';
 import '../../auth/providers/tenant_provider.dart';
+import '../../../shared/providers/api_client_provider.dart';
 import '../services/pdf_generator_service.dart';
 
 class PropostasScreen extends ConsumerStatefulWidget {
@@ -112,6 +114,30 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
                                 icon: const Icon(Icons.receipt_long),
                                 label: const Text('Gerar Fatura (PDF)'),
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: () async {
+                                  try {
+                                    final api = ref.read(apiClientProvider);
+                                    // Assumindo que a API aceita clienteId e valor. A obra seria vinculada depois, mas passamos null provisorio ou tentamos obter
+                                    final response = await api.post('/nfe/emitir', {
+                                      'clienteId': proposta.clienteId,
+                                      'obraId': '00000000-0000-0000-0000-000000000000', // Mock id para fins de simulacao
+                                      'valor': proposta.valorTotal,
+                                    });
+                                    if (response['success'] == true) {
+                                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response['message'] ?? 'NFS-e enviada para processamento!')));
+                                    } else {
+                                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: ${response['error']}')));
+                                    }
+                                  } catch (e) {
+                                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao emitir nota: $e')));
+                                  }
+                                },
+                                icon: const Icon(Icons.account_balance),
+                                label: const Text('Emitir NFS-e (Fiscal)'),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
                               ),
                             ],
                           ],

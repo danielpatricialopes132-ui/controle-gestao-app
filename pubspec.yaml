@@ -53,6 +53,9 @@ dependencies:
   pdf: ^3.13.0
   printing: ^5.15.0
   fl_chart: ^1.2.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  connectivity_plus: ^7.3.1
 
 dev_dependencies:
   flutter_test:

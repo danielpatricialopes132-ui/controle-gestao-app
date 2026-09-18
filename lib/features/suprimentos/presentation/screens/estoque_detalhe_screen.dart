@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/offline/sync_manager.dart';
 
-class EstoqueDetalheScreen extends StatefulWidget {
+class EstoqueDetalheScreen extends ConsumerStatefulWidget {
   final String estoqueId;
   final String estoqueNome;
 
@@ -14,10 +16,10 @@ class EstoqueDetalheScreen extends StatefulWidget {
   });
 
   @override
-  State<EstoqueDetalheScreen> createState() => _EstoqueDetalheScreenState();
+  ConsumerState<EstoqueDetalheScreen> createState() => _EstoqueDetalheScreenState();
 }
 
-class _EstoqueDetalheScreenState extends State<EstoqueDetalheScreen> {
+class _EstoqueDetalheScreenState extends ConsumerState<EstoqueDetalheScreen> {
   bool isLoading = true;
   List<dynamic> itens = [];
 
@@ -142,7 +144,30 @@ class _EstoqueDetalheScreenState extends State<EstoqueDetalheScreen> {
         throw Exception('Erro ao dar baixa: ${response.body}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+        try {
+          final syncManager = ref.read(syncManagerProvider);
+          await syncManager.enqueue('POST', '/suprimentos/estoques/${widget.estoqueId}/itens', {
+            'produtoId': produtoId,
+            'quantidade': quantidade,
+            'tipo': 'SAIDA'
+          });
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Baixa salva localmente (Offline). Será sincronizada depois.')));
+          
+          // Desconta o saldo localmente para refletir na UI temporariamente
+          setState(() {
+            final idx = itens.indexWhere((i) => i['produtoId'] == produtoId);
+            if (idx != -1) {
+              final qtdAtual = double.parse(itens[idx]['quantidade'].toString());
+              itens[idx]['quantidade'] = qtdAtual - quantidade;
+            }
+          });
+        } catch (syncError) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro offline: $syncError')));
+        }
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
     }
   }
 

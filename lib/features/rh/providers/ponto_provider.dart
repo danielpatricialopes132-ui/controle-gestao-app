@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers/api_client_provider.dart';
+import '../../../core/offline/sync_manager.dart';
 
 class PontoParams {
   final String dataStr;
@@ -52,6 +53,22 @@ class PontoController extends AsyncNotifier<void> {
       });
       state = const AsyncValue.data(null);
     } catch (e, st) {
+      // Se for erro de conexão (ex: SocketException ou falha parecida), colocamos na fila
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused') || e.toString().contains('Erro na requisição')) {
+        try {
+          final syncManager = ref.read(syncManagerProvider);
+          await syncManager.enqueue('POST', '/rh/ponto', {
+            'data': dataStr,
+            'obraId': obraId,
+            'registros': registros,
+          });
+          state = const AsyncValue.data(null); // Sucesso "Offline"
+          return;
+        } catch (syncError) {
+          state = AsyncValue.error(syncError, st);
+          rethrow;
+        }
+      }
       state = AsyncValue.error(e, st);
       rethrow;
     }
