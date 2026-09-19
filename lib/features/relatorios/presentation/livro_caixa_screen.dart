@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/utils/export_utils.dart';
 import 'package:intl/intl.dart';
 import '../providers/relatorios_provider.dart';
 import '../../financeiro/providers/financeiro_provider.dart';
@@ -21,13 +22,37 @@ class LivroCaixaScreen extends ConsumerWidget {
         title: const Text('Livro Caixa'),
         actions: [
           livroCaixaAsync.when(
-            data: (data) => IconButton(
-              icon: const Icon(Icons.download),
-              tooltip: 'Exportar para CSV',
-              onPressed: () {
-                // ref.read(relatoriosProvider).exportarLivroCaixaCsv(data);
-              },
-            ),
+            data: (data) {
+              final transacoes = data['transacoes'] as List<dynamic>? ?? [];
+              return IconButton(
+                icon: const Icon(Icons.download),
+                tooltip: 'Exportar para CSV',
+                onPressed: () async {
+                  if (transacoes.isEmpty) return;
+
+                  final rows = <List<dynamic>>[
+                    ['Data', 'Descrição', 'Categoria', 'Conta', 'Valor', 'Status', 'Tipo']
+                  ];
+
+                  for (var t in transacoes) {
+                    rows.add([
+                      t['dataPagamento'] ?? t['dataVencimento'] ?? t['createdAt'],
+                      t['descricao'],
+                      t['categoria'] ?? '',
+                      t['contaBancaria']?['nome'] ?? '',
+                      t['valor'],
+                      t['status'],
+                      t['tipo'],
+                    ]);
+                  }
+
+                  await ExportUtils.exportToCsv(
+                    fileName: 'livro_caixa',
+                    rows: rows,
+                  );
+                },
+              );
+            },
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),

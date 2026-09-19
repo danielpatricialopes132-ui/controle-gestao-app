@@ -93,6 +93,15 @@ class CrmNotifier extends Notifier<CrmState> {
     await api.put('/crm/propostas/$id', {'nfUrl': nfUrl});
     await fetchPropostas();
   }
+
+  Future<Map<String, dynamic>> scanProposta(String base64, String mimeType) async {
+    final api = ref.read(apiClientProvider);
+    final response = await api.post('/crm/propostas/scan', {
+      'base64': base64,
+      'mimeType': mimeType,
+    });
+    return response as Map<String, dynamic>;
+  }
 }
 
 final crmProvider = NotifierProvider<CrmNotifier, CrmState>(() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'nova_proposta_modal.dart';
 import '../../providers/crm_provider.dart';
 import '../../../../features/auth/providers/tenant_provider.dart';
 import '../../../../shared/providers/api_client_provider.dart';
@@ -149,8 +150,10 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Modal para criar proposta nova
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Criador de Proposta em desenvolvimento')));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NovaPropostaModal()),
+          );
         },
         tooltip: 'Novo Orçamento',
         child: const Icon(Icons.add),

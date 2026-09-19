@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/utils/pdf_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/relatorios_provider.dart';
@@ -32,14 +33,26 @@ class FluxoCaixaAba extends ConsumerWidget {
                 children: [
                   const Text('Projeção de Fluxo de Caixa (6 meses)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      final mappedData = data.map((item) => {
-                        'mesAno': item['mesAno'],
-                        'receitas': (item['receitasRealizadas'] ?? 0) + (item['receitasProjetadas'] ?? 0),
-                        'despesas': (item['despesasRealizadas'] ?? 0) + (item['despesasProjetadas'] ?? 0),
-                        'saldo': item['saldoTotalPrevisto'] ?? 0,
+                    onPressed: () async {
+                      final formatFull = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+                      final dataList = data.map((item) {
+                        final receitas = (item['receitasRealizadas'] ?? 0) + (item['receitasProjetadas'] ?? 0);
+                        final despesas = (item['despesasRealizadas'] ?? 0) + (item['despesasProjetadas'] ?? 0);
+                        final saldo = item['saldoTotalPrevisto'] ?? 0;
+                        return [
+                          item['mesAno'].toString(),
+                          formatFull.format(receitas),
+                          formatFull.format(despesas),
+                          formatFull.format(saldo),
+                        ];
                       }).toList();
-                      RelatoriosPdfService.imprimirFluxoCaixa(mappedData);
+
+                      await PdfUtils.exportTablePdf(
+                        title: 'Projeção de Fluxo de Caixa',
+                        fileName: 'fluxo_caixa_report',
+                        headers: ['Mês', 'Receitas', 'Despesas', 'Saldo Final'],
+                        data: dataList,
+                      );
                     },
                     icon: const Icon(Icons.picture_as_pdf),
                     label: const Text('Exportar PDF'),

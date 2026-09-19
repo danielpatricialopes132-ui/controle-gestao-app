@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/utils/pdf_utils.dart';
 import 'package:intl/intl.dart';
 import '../providers/relatorios_provider.dart';
 import '../services/relatorios_pdf_service.dart';
@@ -31,9 +32,28 @@ class DREAba extends ConsumerWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    final mesAno = ref.read(relatorioMesAnoProvider);
-                    RelatoriosPdfService.imprimirDRE(data, mesAno);
+                  onPressed: () async {
+                    final receitasList = data['receitas'] as List<dynamic>;
+                    final custosDiretosList = data['custosDiretos'] as List<dynamic>;
+                    final despesasFixasList = data['despesasFixas'] as List<dynamic>;
+                    final resumoMap = data['resumo'] as Map<String, dynamic>;
+
+                    final dataList = <List<String>>[
+                      ['RECEITAS', ''],
+                      ...receitasList.map((r) => [r['categoria'] ?? 'Sem Categoria', 'R\$ ${(r['valor'] ?? 0).toString()}']),
+                      ['CUSTOS DIRETOS', ''],
+                      ...custosDiretosList.map((c) => [c['categoria'] ?? 'Sem Categoria', 'R\$ ${(c['valor'] ?? 0).toString()}']),
+                      ['DESPESAS FIXAS', ''],
+                      ...despesasFixasList.map((d) => [d['categoria'] ?? 'Sem Categoria', 'R\$ ${(d['valor'] ?? 0).toString()}']),
+                      ['RESULTADO LÍQUIDO', 'R\$ ${(resumoMap['lucroLiquido'] ?? 0).toString()}'],
+                    ];
+
+                    await PdfUtils.exportTablePdf(
+                      title: 'DRE Gerencial',
+                      fileName: 'dre_report',
+                      headers: ['Categoria', 'Valor'],
+                      data: dataList,
+                    );
                   },
                   icon: const Icon(Icons.picture_as_pdf),
                   label: const Text('Exportar PDF'),
