@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/financeiro_provider.dart';
-import '../../rh/providers/rh_provider.dart';
+import '../../rh/providers/rh_provider.dart' hide valesProvider;
 import 'transacao_modal.dart';
 import 'vale_modal.dart';
 import 'dart:convert';
@@ -212,15 +212,17 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
 
   Future<void> _processarPdf(BuildContext context) async {
     try {
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
 
-      if (result.isNotEmpty) {
-        final bytes = await result.single.readAsBytes();
-        final base64String = base64Encode(bytes);
-        _enviarParaBackend(context, base64String, 'application/pdf');
+      if (result != null && result.files.isNotEmpty) {
+        final bytes = result.files.single.bytes;
+        if (bytes != null) {
+          final base64String = base64Encode(bytes);
+          _enviarParaBackend(context, base64String, 'application/pdf');
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao ler PDF: $e')));

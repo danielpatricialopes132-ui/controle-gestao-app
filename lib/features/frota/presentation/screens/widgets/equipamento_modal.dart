@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/frota_provider.dart';
+import '../../../providers/frota_provider.dart';
 
 class EquipamentoModal {
   static void show(BuildContext context, {Map<String, dynamic>? equipamento}) {

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../crm/providers/crm_provider.dart';
-import '../../crm/providers/crm_provider.dart';
-import '../../auth/providers/tenant_provider.dart';
-import '../../../shared/providers/api_client_provider.dart';
-import '../services/pdf_generator_service.dart';
+import '../../providers/crm_provider.dart';
+import '../../../../features/auth/providers/tenant_provider.dart';
+import '../../../../shared/providers/api_client_provider.dart';
+import '../../services/pdf_generator_service.dart';
 
 class PropostasScreen extends ConsumerStatefulWidget {
   const PropostasScreen({super.key});
@@ -74,7 +73,7 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
                           children: [
                             IconButton(
                               onPressed: () async {
-                                final tenantId = ref.read(tenantProvider);
+                                final tenantId = ref.read(tenantOverrideProvider);
                                 if (tenantId != null) {
                                   // Pegar nome da empresa real do tenant atual se possível, ou padrao
                                   await PdfGeneratorService.imprimirOuCompartilhar(proposta, 'DPG Construtoras & Obras');
@@ -106,7 +105,7 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
                             if (proposta.status == 'APROVADA') ...[
                               ElevatedButton.icon(
                                 onPressed: () async {
-                                  final tenantId = ref.read(tenantProvider);
+                                  final tenantId = ref.read(tenantOverrideProvider);
                                   if (tenantId != null) {
                                     await PdfGeneratorService.gerarECompartilharFatura(proposta, 'DPG Construtoras & Obras');
                                   }

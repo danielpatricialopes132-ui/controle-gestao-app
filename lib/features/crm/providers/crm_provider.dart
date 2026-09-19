@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import '../../auth/providers/tenant_provider.dart';
+import '../../../shared/providers/api_client_provider.dart';
 import '../data/models/cliente.dart';
 import '../data/models/proposta.dart';
 
@@ -32,31 +30,23 @@ class CrmState {
   }
 }
 
-class CrmNotifier extends StateNotifier<CrmState> {
-  final Ref ref;
-
-  CrmNotifier(this.ref) : super(CrmState());
+class CrmNotifier extends Notifier<CrmState> {
+  @override
+  CrmState build() {
+    return CrmState();
+  }
 
   Future<void> fetchClientes() async {
-    final tenantId = ref.read(tenantProvider);
-    if (tenantId == null) return;
-
     state = state.copyWith(isLoading: true);
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/crm/clientes'),
-        headers: {'x-tenant-id': tenantId},
-      );
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/crm/clientes');
 
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        state = state.copyWith(
-          clientes: data.map((e) => Cliente.fromJson(e)).toList(),
-          isLoading: false,
-        );
-      } else {
-        throw Exception('Failed to load clientes');
-      }
+      final List data = response;
+      state = state.copyWith(
+        clientes: data.map((e) => Cliente.fromJson(e)).toList(),
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false);
       rethrow;
@@ -64,45 +54,22 @@ class CrmNotifier extends StateNotifier<CrmState> {
   }
 
   Future<void> createCliente(Cliente cliente) async {
-    final tenantId = ref.read(tenantProvider);
-    if (tenantId == null) return;
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/crm/clientes'),
-      headers: {
-        'x-tenant-id': tenantId,
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(cliente.toJson()),
-    );
-
-    if (response.statusCode == 201) {
-      await fetchClientes();
-    } else {
-      throw Exception('Failed to create cliente');
-    }
+    final api = ref.read(apiClientProvider);
+    await api.post('/crm/clientes', cliente.toJson());
+    await fetchClientes();
   }
 
   Future<void> fetchPropostas() async {
-    final tenantId = ref.read(tenantProvider);
-    if (tenantId == null) return;
-
     state = state.copyWith(isLoading: true);
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/crm/propostas'),
-        headers: {'x-tenant-id': tenantId},
-      );
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/crm/propostas');
 
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        state = state.copyWith(
-          propostas: data.map((e) => Proposta.fromJson(e)).toList(),
-          isLoading: false,
-        );
-      } else {
-        throw Exception('Failed to load propostas');
-      }
+      final List data = response;
+      state = state.copyWith(
+        propostas: data.map((e) => Proposta.fromJson(e)).toList(),
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false);
       rethrow;
@@ -110,66 +77,24 @@ class CrmNotifier extends StateNotifier<CrmState> {
   }
 
   Future<void> createProposta(Proposta proposta) async {
-    final tenantId = ref.read(tenantProvider);
-    if (tenantId == null) return;
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/crm/propostas'),
-      headers: {
-        'x-tenant-id': tenantId,
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(proposta.toJson()),
-    );
-
-    if (response.statusCode == 201) {
-      await fetchPropostas();
-    } else {
-      throw Exception('Failed to create proposta');
-    }
+    final api = ref.read(apiClientProvider);
+    await api.post('/crm/propostas', proposta.toJson());
+    await fetchPropostas();
   }
 
   Future<void> updatePropostaStatus(String id, String novoStatus) async {
-    final tenantId = ref.read(tenantProvider);
-    if (tenantId == null) return;
-
-    final response = await http.put(
-      Uri.parse('$baseUrl/crm/propostas/$id'),
-      headers: {
-        'x-tenant-id': tenantId,
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({'status': novoStatus}),
-    );
-
-    if (response.statusCode == 200) {
-      await fetchPropostas();
-    } else {
-      throw Exception('Failed to update proposta');
-    }
+    final api = ref.read(apiClientProvider);
+    await api.put('/crm/propostas/$id', {'status': novoStatus});
+    await fetchPropostas();
   }
 
   Future<void> updatePropostaNfUrl(String id, String nfUrl) async {
-    final tenantId = ref.read(tenantProvider);
-    if (tenantId == null) return;
-
-    final response = await http.put(
-      Uri.parse('$baseUrl/crm/propostas/$id'),
-      headers: {
-        'x-tenant-id': tenantId,
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({'nfUrl': nfUrl}),
-    );
-
-    if (response.statusCode == 200) {
-      await fetchPropostas();
-    } else {
-      throw Exception('Failed to update proposta nfUrl');
-    }
+    final api = ref.read(apiClientProvider);
+    await api.put('/crm/propostas/$id', {'nfUrl': nfUrl});
+    await fetchPropostas();
   }
 }
 
-final crmProvider = StateNotifierProvider<CrmNotifier, CrmState>((ref) {
-  return CrmNotifier(ref);
+final crmProvider = NotifierProvider<CrmNotifier, CrmState>(() {
+  return CrmNotifier();
 });

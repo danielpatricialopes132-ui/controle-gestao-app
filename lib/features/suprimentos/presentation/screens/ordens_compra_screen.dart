@@ -51,35 +51,35 @@ class _OrdensCompraScreenState extends ConsumerState<OrdensCompraScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('OC #${ordem.numero}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('OC #${ordem['numero']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             Chip(
-                              label: Text(ordem.status, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                              backgroundColor: ordem.status == 'ENTREGUE' ? Colors.green : Colors.orange,
+                              label: Text(ordem['status'], style: const TextStyle(color: Colors.white, fontSize: 12)),
+                              backgroundColor: ordem['status'] == 'ENTREGUE' ? Colors.green : Colors.orange,
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('Fornecedor: ${ordem.fornecedor?.nome ?? 'Desconhecido'}'),
-                        Text('Valor Total: R\$ ${ordem.valorTotal.toStringAsFixed(2)}'),
+                        Text('Fornecedor: ${ordem['fornecedor']?['nome'] ?? 'Desconhecido'}'),
+                        Text('Valor Total: R\$ ${(ordem['valorTotal'] ?? 0).toStringAsFixed(2)}'),
                         const Divider(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (ordem.status == 'PENDENTE')
+                            if (ordem['status'] == 'PENDENTE')
                               ElevatedButton.icon(
-                                onPressed: () => _atualizarStatus(ordem.id, 'APROVADA'),
+                                onPressed: () => _atualizarStatus(ordem['id'], 'APROVADA'),
                                 icon: const Icon(Icons.thumb_up),
                                 label: const Text('Aprovar OC'),
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
                               ),
-                            if (ordem.status == 'APROVADA')
+                            if (ordem['status'] == 'APROVADA')
                               ElevatedButton.icon(
-                                onPressed: () => _atualizarStatus(ordem.id, 'ENTREGUE'),
+                                onPressed: () => _atualizarStatus(ordem['id'], 'ENTREGUE'),
                                 icon: const Icon(Icons.local_shipping),
                                 label: const Text('Registrar Entrega'),
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                               ),
-                            if (ordem.status == 'ENTREGUE')
+                            if (ordem['status'] == 'ENTREGUE')
                               const Text('Estoque Atualizado', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                           ],
                         )

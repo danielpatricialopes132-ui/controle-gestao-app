@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/suprimentos_provider.dart';
-import '../data/models/produto.dart';
 
 class ProdutosScreen extends ConsumerStatefulWidget {
   const ProdutosScreen({super.key});
@@ -59,12 +58,11 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
                   if (nomeController.text.isEmpty) return;
                   try {
                     await ref.read(suprimentosProvider.notifier).createProduto(
-                      Produto(
-                        id: '',
-                        nome: nomeController.text,
-                        unidadeMedida: unidadeMedida,
-                        precoBase: double.tryParse(precoController.text.replaceAll(',', '.')) ?? 0,
-                      )
+                      {
+                        'nome': nomeController.text,
+                        'unidadeMedida': unidadeMedida,
+                        'precoBase': double.tryParse(precoController.text.replaceAll(',', '.')) ?? 0,
+                      }
                     );
                     if (mounted) Navigator.pop(context);
                   } catch (e) {
@@ -95,8 +93,8 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
                 final produto = provider.produtos[index];
                 return ListTile(
                   leading: const CircleAvatar(child: Icon(Icons.inventory_2)),
-                  title: Text(produto.nome),
-                  subtitle: Text('Medida: ${produto.unidadeMedida} | Preço Base: R\$ ${produto.precoBase}'),
+                  title: Text(produto['nome']),
+                  subtitle: Text('Medida: ${produto['unidadeMedida']} | Preço Base: R\$ ${produto['precoBase']}'),
                 );
               },
             ),

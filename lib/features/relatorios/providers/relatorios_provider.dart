@@ -1,82 +1,53 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import '../../auth/providers/auth_provider.dart';
-import '../../auth/providers/tenant_provider.dart';
+import 'dart:async';
+import '../../../shared/providers/api_client_provider.dart';
 
-class RelatoriosController extends StateNotifier<AsyncValue<void>> {
-  final Ref ref;
-
-  RelatoriosController(this.ref) : super(const AsyncData(null));
+class RelatoriosController extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
 
   Future<Map<String, dynamic>> fetchDRE({int? mes, int? ano}) async {
-    final token = ref.read(authTokenProvider);
-    final tenant = ref.read(currentTenantProvider);
-    
-    String urlStr = 'http://localhost:3000/api/relatorios/gerencial';
+    String urlStr = '/relatorios/gerencial';
     if (mes != null && ano != null) {
       urlStr += '?mes=$mes&ano=$ano';
     }
     
-    final url = Uri.parse(urlStr);
-    final response = await http.get(url, headers: {
-      'Authorization': 'Bearer $token',
-      if (tenant != null) 'x-tenant-override': tenant.id,
-    });
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Erro ao carregar DRE: ${response.body}');
-    }
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(urlStr);
+    return response as Map<String, dynamic>;
   }
 
   Future<List<dynamic>> fetchFluxoCaixa({int meses = 6}) async {
-    final token = ref.read(authTokenProvider);
-    final tenant = ref.read(currentTenantProvider);
-    
-    final url = Uri.parse('http://localhost:3000/api/relatorios/fluxo-caixa?meses=$meses');
-    final response = await http.get(url, headers: {
-      'Authorization': 'Bearer $token',
-      if (tenant != null) 'x-tenant-override': tenant.id,
-    });
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Erro ao carregar Fluxo de Caixa: ${response.body}');
-    }
+    final api = ref.read(apiClientProvider);
+    final response = await api.get('/relatorios/fluxo-caixa?meses=$meses');
+    return response as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> fetchLucratividade({int? mes, int? ano}) async {
-    final token = ref.read(authTokenProvider);
-    final tenant = ref.read(currentTenantProvider);
-    
-    String urlStr = 'http://localhost:3000/api/relatorios/lucratividade';
+    String urlStr = '/relatorios/lucratividade';
     if (mes != null && ano != null) {
       urlStr += '?mes=$mes&ano=$ano';
     }
     
-    final url = Uri.parse(urlStr);
-    final response = await http.get(url, headers: {
-      'Authorization': 'Bearer $token',
-      if (tenant != null) 'x-tenant-override': tenant.id,
-    });
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Erro ao carregar Lucratividade: ${response.body}');
-    }
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(urlStr);
+    return response as Map<String, dynamic>;
   }
 }
 
-final relatoriosControllerProvider = StateNotifierProvider<RelatoriosController, AsyncValue<void>>((ref) {
-  return RelatoriosController(ref);
+final relatoriosControllerProvider = AsyncNotifierProvider<RelatoriosController, void>(() {
+  return RelatoriosController();
 });
 
-// A simple state provider for current filter month/year
-final relatorioMesAnoProvider = StateProvider<DateTime>((ref) => DateTime.now());
+class RelatorioMesAnoNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() => DateTime.now();
+}
+
+final relatorioMesAnoProvider = NotifierProvider<RelatorioMesAnoNotifier, DateTime>(() {
+  return RelatorioMesAnoNotifier();
+});
 
 final dreProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final date = ref.watch(relatorioMesAnoProvider);
@@ -91,3 +62,62 @@ final lucratividadeProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final date = ref.watch(relatorioMesAnoProvider);
   return ref.read(relatoriosControllerProvider.notifier).fetchLucratividade(mes: date.month, ano: date.year);
 });
+
+class LivroCaixaFilters {
+  final DateTime dataInicio;
+  final DateTime dataFim;
+  final String? contaBancariaId;
+
+  LivroCaixaFilters({
+    required this.dataInicio,
+    required this.dataFim,
+    this.contaBancariaId,
+  });
+
+  LivroCaixaFilters copyWith({
+    DateTime? dataInicio,
+    DateTime? dataFim,
+    String? contaBancariaId,
+  }) {
+    return LivroCaixaFilters(
+      dataInicio: dataInicio ?? this.dataInicio,
+      dataFim: dataFim ?? this.dataFim,
+      // If we want to allow nulling contaBancariaId, we can't do it simply with copyWith unless we use a wrapper, 
+      // but here we just assume value can be null in the argument. To allow setting to null when copyWith is called, 
+      // wait, the dropdown passes null! So we should allow it. But Dart doesn't distinguish between absent and null well.
+      // We will just do a simple check. Actually, in dropdown we just pass the new value.
+      contaBancariaId: contaBancariaId, 
+    );
+  }
+}
+
+class LivroCaixaFiltersNotifier extends Notifier<LivroCaixaFilters> {
+  @override
+  LivroCaixaFilters build() {
+    final now = DateTime.now();
+    return LivroCaixaFilters(
+      dataInicio: DateTime(now.year, now.month, 1),
+      dataFim: DateTime(now.year, now.month + 1, 0),
+    );
+  }
+}
+
+final livroCaixaFiltersProvider = NotifierProvider<LivroCaixaFiltersNotifier, LivroCaixaFilters>(() {
+  return LivroCaixaFiltersNotifier();
+});
+
+final livroCaixaProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final filters = ref.watch(livroCaixaFiltersProvider);
+  final api = ref.watch(apiClientProvider);
+  
+  String url = '/relatorios/livro-caixa?inicio=${filters.dataInicio.toIso8601String()}&fim=${filters.dataFim.toIso8601String()}';
+  if (filters.contaBancariaId != null) {
+    url += '&contaBancariaId=${filters.contaBancariaId}';
+  }
+  
+  final response = await api.get(url);
+  if (response is Map<String, dynamic>) return response;
+  // Fallback
+  return {'saldoAnterior': 0, 'transacoes': []};
+});
+

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/frota_provider.dart';
+import '../../providers/frota_provider.dart';
 import 'widgets/equipamento_modal.dart';
 import 'widgets/alocacao_modal.dart';
 import 'widgets/manutencao_modal.dart';

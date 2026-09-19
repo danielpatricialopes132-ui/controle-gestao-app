@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/frota_provider.dart';
-import '../../../obras/providers/obras_provider.dart';
+import '../../../providers/frota_provider.dart';
+import '../../../../obras/providers/obras_provider.dart';
 
 class AlocacaoModal {
   static void show(BuildContext context, String equipamentoId) {

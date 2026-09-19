@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/providers/api_client_provider.dart';
 import '../../../../core/offline/sync_manager.dart';
 
 class EstoqueDetalheScreen extends ConsumerStatefulWidget {
@@ -31,35 +31,20 @@ class _EstoqueDetalheScreenState extends ConsumerState<EstoqueDetalheScreen> {
 
   Future<void> fetchItens() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/suprimentos/estoques/${widget.estoqueId}/itens');
       
-      final url = Uri.parse('http://localhost:3000/api/suprimentos/estoques/${widget.estoqueId}/itens');
-      
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          itens = data['data'];
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Erro ao carregar itens: ${response.body}');
-      }
+      setState(() {
+        itens = response as List<dynamic>;
+        isLoading = false;
+      });
     } catch (e) {
-      setState(() { isLoading = false; });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e')),
-        );
-      }
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar itens do estoque: $e')),
+      );
     }
   }
 
@@ -119,51 +104,37 @@ class _EstoqueDetalheScreenState extends ConsumerState<EstoqueDetalheScreen> {
 
   Future<void> registrarBaixa(String produtoId, double quantidade) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final api = ref.read(apiClientProvider);
+      await api.post('/suprimentos/estoques/${widget.estoqueId}/itens', {
+        'produtoId': produtoId,
+        'quantidade': quantidade,
+        'tipo': 'SAIDA',
+        'data': DateTime.now().toIso8601String(),
+      });
       
-      final url = Uri.parse('http://localhost:3000/api/suprimentos/estoques/${widget.estoqueId}/itens');
-      
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'produtoId': produtoId,
-          'quantidade': quantidade,
-          'tipo': 'SAIDA'
-        })
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Baixa registrada com sucesso!')),
       );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Baixa registrada com sucesso!')));
-        fetchItens();
-      } else {
-        throw Exception('Erro ao dar baixa: ${response.body}');
-      }
+      
+      fetchItens();
     } catch (e) {
+      // Offline fallback
       if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
         try {
           final syncManager = ref.read(syncManagerProvider);
           await syncManager.enqueue('POST', '/suprimentos/estoques/${widget.estoqueId}/itens', {
             'produtoId': produtoId,
             'quantidade': quantidade,
-            'tipo': 'SAIDA'
+            'tipo': 'SAIDA',
+            'data': DateTime.now().toIso8601String(),
           });
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Baixa salva localmente (Offline). Será sincronizada depois.')));
-          
-          // Desconta o saldo localmente para refletir na UI temporariamente
-          setState(() {
-            final idx = itens.indexWhere((i) => i['produtoId'] == produtoId);
-            if (idx != -1) {
-              final qtdAtual = double.parse(itens[idx]['quantidade'].toString());
-              itens[idx]['quantidade'] = qtdAtual - quantidade;
-            }
-          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Offline: Baixa enfileirada para sincronização.')),
+          );
         } catch (syncError) {
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro offline: $syncError')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erro ao salvar baixa offline.')),
+          );
         }
       } else {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));

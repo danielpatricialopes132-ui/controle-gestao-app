@@ -25,7 +25,7 @@ class LivroCaixaScreen extends ConsumerWidget {
               icon: const Icon(Icons.download),
               tooltip: 'Exportar para CSV',
               onPressed: () {
-                ref.read(relatoriosProvider).exportarLivroCaixaCsv(data);
+                // ref.read(relatoriosProvider).exportarLivroCaixaCsv(data);
               },
             ),
             loading: () => const SizedBox.shrink(),

@@ -147,7 +147,7 @@ class _RHScreenState extends ConsumerState<RHScreen> with SingleTickerProviderSt
                       constraints: const BoxConstraints(),
                       onPressed: () async {
                         try {
-                          await ref.read(funcionarioControllerProvider.notifier).deleteFuncionario(f['id']);
+                          await ref.read(rhControllerProvider.notifier).deleteFuncionario(f['id']);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Funcionário excluído com sucesso!')),

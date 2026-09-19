@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../financeiro/providers/financeiro_provider.dart';
+import '../../providers/financeiro_provider.dart';
 
 class OfxImportScreen extends ConsumerStatefulWidget {
   const OfxImportScreen({super.key});

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/suprimentos_provider.dart';
-import '../data/models/fornecedor.dart';
 
 class FornecedoresScreen extends ConsumerStatefulWidget {
   const FornecedoresScreen({super.key});
@@ -62,13 +61,12 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen> {
                   if (nomeController.text.isEmpty) return;
                   try {
                     await ref.read(suprimentosProvider.notifier).createFornecedor(
-                      Fornecedor(
-                        id: '',
-                        nome: nomeController.text,
-                        cnpj: cnpjController.text,
-                        telefone: telefoneController.text,
-                        email: emailController.text,
-                      )
+                      {
+                        'nome': nomeController.text,
+                        'cnpj': cnpjController.text,
+                        'telefone': telefoneController.text,
+                        'email': emailController.text,
+                      }
                     );
                     if (mounted) Navigator.pop(context);
                   } catch (e) {
@@ -99,8 +97,8 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen> {
                 final fornecedor = provider.fornecedores[index];
                 return ListTile(
                   leading: const CircleAvatar(child: Icon(Icons.local_shipping)),
-                  title: Text(fornecedor.nome),
-                  subtitle: Text(fornecedor.telefone ?? 'Sem telefone'),
+                  title: Text(fornecedor['nome']),
+                  subtitle: Text(fornecedor['telefone'] ?? 'Sem telefone'),
                   trailing: const Icon(Icons.chevron_right),
                 );
               },

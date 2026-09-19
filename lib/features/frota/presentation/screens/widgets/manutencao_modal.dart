@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/frota_provider.dart';
+import '../../../providers/frota_provider.dart';
 import 'package:intl/intl.dart';
 
 class ManutencaoModal {

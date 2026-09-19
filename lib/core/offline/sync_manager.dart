@@ -7,7 +7,9 @@ import '../../shared/providers/api_client_provider.dart';
 
 final syncManagerProvider = Provider<SyncManager>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return SyncManager(apiClient);
+  final manager = SyncManager(apiClient);
+  manager.init(); // Inicia o Hive box e listeners sem bloquear
+  return manager;
 });
 
 /// Define um trabalho de sincronização que falhou por falta de internet.

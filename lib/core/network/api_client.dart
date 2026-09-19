@@ -104,6 +104,36 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> patch(String endpoint, Map<String, dynamic> body) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Usuário não autenticado');
+    }
+
+    final token = await user.getIdToken();
+    
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    if (tenantOverride != null) {
+      headers['x-tenant-override'] = tenantOverride!;
+    }
+    
+    final response = await http.patch(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Erro na requisição: ${response.statusCode} - ${response.body}');
+    }
+  }
+
   Future<dynamic> delete(String endpoint) async {
     final user = _auth.currentUser;
     if (user == null) {

@@ -58,7 +58,7 @@ class _FuncionarioModalState extends ConsumerState<FuncionarioModal> {
 
   @override
   Widget build(BuildContext context) {
-    final estado = ref.watch(funcionarioControllerProvider);
+    final estado = ref.watch(rhControllerProvider);
     final isLoading = estado is AsyncLoading;
 
     return Padding(
@@ -124,20 +124,21 @@ class _FuncionarioModalState extends ConsumerState<FuncionarioModal> {
               onPressed: isLoading ? null : () async {
                 if (_formKey.currentState!.validate()) {
                   try {
+                    final data = {
+                      'nome': _nomeController.text,
+                      'cargo': _cargoController.text,
+                      'salario': _salarioController.text,
+                      'valorDiariaMotorista': _isMotorista ? _diariaMotoristaController.text : null,
+                    };
+
                     if (widget.funcionario != null) {
-                      await ref.read(funcionarioControllerProvider.notifier).updateFuncionario(
+                      await ref.read(rhControllerProvider.notifier).saveFuncionario(
+                        data,
                         id: widget.funcionario!['id'],
-                        nome: _nomeController.text,
-                        cargo: _cargoController.text,
-                        salario: _salarioController.text,
-                        valorDiariaMotorista: _isMotorista ? _diariaMotoristaController.text : null,
                       );
                     } else {
-                      await ref.read(funcionarioControllerProvider.notifier).addFuncionario(
-                        nome: _nomeController.text,
-                        cargo: _cargoController.text,
-                        salario: _salarioController.text,
-                        valorDiariaMotorista: _isMotorista ? _diariaMotoristaController.text : null,
+                      await ref.read(rhControllerProvider.notifier).saveFuncionario(
+                        data,
                       );
                     }
                     

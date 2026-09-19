@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../crm/providers/crm_provider.dart';
-import '../data/models/cliente.dart';
+import '../../providers/crm_provider.dart';
+import '../../data/models/cliente.dart';
 import 'package:flutter/services.dart';
-import '../../obras/providers/obra_ged_provider.dart';
+import '../../../obras/providers/obra_ged_provider.dart';
 
 class ClientesScreen extends ConsumerStatefulWidget {
   const ClientesScreen({super.key});
