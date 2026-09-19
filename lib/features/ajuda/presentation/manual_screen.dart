@@ -39,7 +39,8 @@ class ManualScreen extends StatelessWidget {
               title: '3. Financeiro',
               content: 'Aba dedicada ao controle de receitas, despesas e vales dos funcionários.\n'
               '- Lançar Transação: Clique no botão flutuante para adicionar uma receita ou despesa. Selecione a categoria correta para facilitar os relatórios.\n'
-              '- Validação: Toda conta tem status PAGO ou PENDENTE.\n'
+              '- Importação Automática: Importe boletos via PDF ou Notas Fiscais (XML). A Inteligência Artificial (Gemini) fará a leitura automática dos valores e código de barras.\n'
+              '- Previsão de Fluxo de Caixa IA: Clique no ícone de "brilho" para que o CFO Virtual calcule e mostre o risco de déficit de caixa para os próximos 3 meses.\n'
               '- Configuração Contábil: Cadastre novas categorias no botão de engrenagem.',
             ),
             
@@ -95,7 +96,7 @@ class ManualScreen extends StatelessWidget {
               context,
               icon: Icons.auto_awesome,
               title: '9. Assistente Virtual (IA)',
-              content: 'Exclusivo para perfis MASTER, o botão flutuante abre o Assistente de Inteligência Artificial para tirar dúvidas rápidas sobre lançamentos contábeis ou análise de dados.',
+              content: 'Exclusivo para perfis MASTER, o botão flutuante abre o Assistente de Inteligência Artificial para tirar dúvidas rápidas sobre lançamentos contábeis ou análise de dados, ou gerar Previsão de Fluxo de Caixa.',
             ),
 
             _buildSection(
