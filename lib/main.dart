@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart'; // Será gerado pelo flutterfire configure
+import 'core/services/push_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,12 @@ void main() async {
   );
 
   await Hive.initFlutter();
+  
+  try {
+    await PushNotificationService().initialize();
+  } catch (e) {
+    debugPrint("Erro ao inicializar push notifications: $e");
+  }
 
   runApp(
     const ProviderScope(
