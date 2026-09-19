@@ -26,10 +26,10 @@ class _GedAbaState extends ConsumerState<GedAba> {
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
     );
 
-    if (result != null && result.single.path != null) {
+    if (result != null && result.files.single.path != null) {
       setState(() => _uploading = true);
       try {
-        final file = result.single;
+        final file = result.files.single;
         Uint8List fileBytes = await File(file.path!).readAsBytes();
         
         String mimeType = 'application/pdf';

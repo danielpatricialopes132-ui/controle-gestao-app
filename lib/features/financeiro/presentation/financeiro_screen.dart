@@ -231,8 +231,8 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
         allowedExtensions: ['pdf'],
       );
 
-      if (result != null && result.isNotEmpty) {
-        final path = result.single.path;
+      if (result != null && result.files.isNotEmpty) {
+        final path = result.files.single.path;
         if (path != null) {
           final bytes = await File(path).readAsBytes();
           final base64String = base64Encode(bytes);
