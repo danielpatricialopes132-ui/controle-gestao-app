@@ -18,21 +18,21 @@ class _OfxImportScreenState extends ConsumerState<OfxImportScreen> {
   bool _isLoading = false;
 
   void _importarOfx() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['ofx'],
     );
 
-    if (result != null && result.files.single.path != null) {
+    if (result != null && result.single.path != null) {
       setState(() => _isLoading = true);
       try {
-        final bytes = await File(result.files.single.path!).readAsBytes();
+        final bytes = await File(result.single.path!).readAsBytes();
         final base64String = base64Encode(bytes);
         
         final ofxList = await ref.read(financeiroControllerProvider.notifier).uploadOfx(
           base64String,
           'application/x-ofx',
-          result.files.single.name,
+          result.single.name,
         );
         
         setState(() {

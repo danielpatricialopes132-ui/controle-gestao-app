@@ -212,14 +212,15 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
 
   Future<void> _processarPdf(BuildContext context) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
 
-      if (result != null && result.files.isNotEmpty) {
-        final bytes = result.files.single.bytes;
-        if (bytes != null) {
+      if (result != null && result.isNotEmpty) {
+        final path = result.single.path;
+        if (path != null) {
+          final bytes = await File(path).readAsBytes();
           final base64String = base64Encode(bytes);
           _enviarParaBackend(context, base64String, 'application/pdf');
         }

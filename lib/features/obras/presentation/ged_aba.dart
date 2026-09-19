@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,17 +20,16 @@ class _GedAbaState extends ConsumerState<GedAba> {
   bool _uploading = false;
 
   void _uploadDocumento() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    List<PlatformFile>? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
-      withData: true,
     );
 
-    if (result != null && result.files.single.bytes != null) {
+    if (result != null && result.single.path != null) {
       setState(() => _uploading = true);
       try {
-        final file = result.files.single;
-        List<int> fileBytes = file.bytes!;
+        final file = result.single;
+        Uint8List fileBytes = await File(file.path!).readAsBytes();
         
         String mimeType = 'application/pdf';
         if (file.extension == 'png') mimeType = 'image/png';
@@ -37,7 +38,7 @@ class _GedAbaState extends ConsumerState<GedAba> {
         // Compressão de imagem
         if (mimeType.contains('image')) {
           final compressedBytes = await FlutterImageCompress.compressWithList(
-            file.bytes!,
+            fileBytes,
             minWidth: 1024,
             minHeight: 1024,
             quality: 70,
