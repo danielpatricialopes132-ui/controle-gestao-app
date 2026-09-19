@@ -47,10 +47,10 @@ class ManualScreen extends StatelessWidget {
               context,
               icon: Icons.people,
               title: '4. Recursos Humanos e Empreiteiros',
-              content: 'Aqui você gerencia sua equipe (CLT, Diaristas e Empreiteiros PJ).\n'
+              content: 'Aqui você gerencia sua equipe (CLT, Diaristas, RPA e Empreiteiros PJ).\n'
               '- Apontamento Simplificado: Gere a folha do diário de obra de forma rápida e em lote para todos os presentes na obra.\n'
-              '- Vales e Adiantamentos: Lance adiantamentos que já geram uma Despesa automática no seu fluxo de caixa.\n'
-              '- Equipe: Cadastro rápido unificado, com salários e chaves PIX.',
+              '- Vales e Adiantamentos: Lance adiantamentos que já geram uma Despesa automática no fluxo de caixa.\n'
+              '- Geração de Recibos e Assinatura em Tela: Exporte Holerites, RPAs ou Extratos. Ao gerar, você pode colher a assinatura eletrônica do colaborador com o dedo direto no aplicativo.',
             ),
             
             _buildSection(

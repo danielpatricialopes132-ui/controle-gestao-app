@@ -58,6 +58,23 @@ class FinanceiroController extends Notifier<AsyncValue<void>> {
     }
   }
 
+  Future<Map<String, dynamic>> gerarPrevisaoIa() async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/financeiro/previsao');
+      state = const AsyncData(null);
+      if (response['success'] == true) {
+        return response['data'];
+      } else {
+        throw Exception(response['error'] ?? 'Erro desconhecido ao gerar previsão IA');
+      }
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
   Future<void> addTransacao(Map<String, dynamic> data) async {
     state = const AsyncLoading();
     try {

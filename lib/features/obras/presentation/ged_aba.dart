@@ -20,7 +20,8 @@ class _GedAbaState extends ConsumerState<GedAba> {
   bool _uploading = false;
 
   void _uploadDocumento() async {
-    List<PlatformFile>? result = await FilePicker.pickFiles(
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
     );

@@ -11,11 +11,12 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-
+import 'package:xml/xml.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'widgets/calculadora_financeira_modal.dart';
 import 'screens/ofx_import_screen.dart';
+import 'screens/previsao_ia_screen.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
@@ -81,6 +82,11 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             icon: const Icon(Icons.import_export),
             tooltip: 'Conciliação OFX',
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfxImportScreen())),
+          ),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            tooltip: 'Previsão de Caixa (IA)',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrevisaoIaScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -174,10 +180,18 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
           ),
           ListTile(
             leading: const Icon(Icons.picture_as_pdf),
-            title: const Text('Escolher PDF'),
+            title: const Text('Escanear PDF/Imagem (IA)'),
             onTap: () {
               Navigator.pop(ctx);
               _processarPdf(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.receipt),
+            title: const Text('Importar NF-e (XML)'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _processarXml(context);
             },
           ),
         ],
@@ -212,7 +226,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
 
   Future<void> _processarPdf(BuildContext context) async {
     try {
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
@@ -227,6 +241,66 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao ler PDF: $e')));
+    }
+  }
+
+  Future<void> _processarXml(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xml'],
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.single;
+        if (file.bytes != null) {
+          final xmlString = utf8.decode(file.bytes!);
+          final document = XmlDocument.parse(xmlString);
+          
+          String valor = '0.0';
+          String descricao = 'NF-e Importada';
+          String dataVencimentoStr = '';
+          
+          try {
+            final vNFElements = document.findAllElements('vNF');
+            if (vNFElements.isNotEmpty) {
+              valor = vNFElements.first.innerText;
+            }
+            
+            final emitElements = document.findAllElements('emit');
+            if (emitElements.isNotEmpty) {
+               final xNomeElements = emitElements.first.findElements('xNome');
+               if (xNomeElements.isNotEmpty) {
+                 descricao = xNomeElements.first.innerText;
+               }
+            }
+            
+            final dhEmiElements = document.findAllElements('dhEmi');
+            if (dhEmiElements.isNotEmpty) {
+              dataVencimentoStr = dhEmiElements.first.innerText;
+            }
+          } catch (e) {
+            debugPrint('Erro ao extrair campos do XML: $e');
+          }
+
+          if (context.mounted) {
+            final transacaoExtraida = {
+              'descricao': descricao,
+              'valor': double.tryParse(valor) ?? 0.0,
+              'dataVencimento': dataVencimentoStr,
+              'tipo': 'DESPESA',
+              'status': 'PENDENTE',
+            };
+            
+            TransacaoModal.show(context, isReceita: false, transacao: transacaoExtraida);
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao processar XML: $e')));
+      }
     }
   }
 

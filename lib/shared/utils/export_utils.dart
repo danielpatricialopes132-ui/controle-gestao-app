@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:csv/csv.dart';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -9,7 +9,7 @@ class ExportUtils {
     required String fileName,
     required List<List<dynamic>> rows,
   }) async {
-    String csv = const ListToCsvConverter().convert(rows);
+    String csv = rows.map((row) => row.map((e) => '"${e.toString().replaceAll('"', '""')}"').join(',')).join('\n');
 
     if (kIsWeb) {
       await Share.shareXFiles(

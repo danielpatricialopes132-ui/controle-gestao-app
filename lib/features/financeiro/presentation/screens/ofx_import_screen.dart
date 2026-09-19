@@ -18,7 +18,7 @@ class _OfxImportScreenState extends ConsumerState<OfxImportScreen> {
   bool _isLoading = false;
 
   void _importarOfx() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['ofx'],
     );
