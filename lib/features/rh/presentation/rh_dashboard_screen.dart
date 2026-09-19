@@ -4,7 +4,8 @@ import '../providers/rh_provider.dart';
 import 'widgets/funcionario_modal.dart';
 import 'widgets/vale_modal.dart';
 import 'widgets/apontamentos_aba.dart';
-import '../services/extrato_pdf_service.dart';
+import '../services/rh_documentos_pdf_service.dart';
+import '../../../shared/widgets/assinatura_modal.dart';
 import 'package:intl/intl.dart';
 
 class RhDashboardScreen extends ConsumerStatefulWidget {
@@ -100,7 +101,18 @@ class _RhDashboardScreenState extends ConsumerState<RhDashboardScreen> with Sing
                       tooltip: 'Extrato de Vales',
                       onPressed: () async {
                         final vales = await ref.read(valesProvider.future);
-                        ExtratoPdfService.imprimirExtrato(f, vales);
+                        
+                        final assinaturaBytes = await AssinaturaModal.mostrar(context, titulo: 'Assinar Recibo');
+                        
+                        final tipo = f['tipoColaborador'] ?? 'CLT';
+                        if (tipo == 'EMPREITEIRO') {
+                          await RhDocumentosPdfService.imprimirExtratoEmpreiteiro(f, vales, assinaturaBytes: assinaturaBytes);
+                        } else if (tipo == 'RPA' || tipo == 'DIARISTA') {
+                          await RhDocumentosPdfService.imprimirRPA(f, 2500.0, 275.0, 125.0, assinaturaBytes: assinaturaBytes);
+                        } else {
+                          final salarioBase = double.tryParse(f['salario']?.toString() ?? '0') ?? 2000.0;
+                          await RhDocumentosPdfService.imprimirHolerite(f, salarioBase, vales, assinaturaBytes: assinaturaBytes);
+                        }
                       },
                     ),
                     IconButton(
