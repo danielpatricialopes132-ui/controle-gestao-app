@@ -63,7 +63,6 @@ class DefaultFirebaseOptions {
     projectId: 'controle-gestao-ea7ad',
     storageBucket: 'controle-gestao-ea7ad.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBnRhOjsmGtB0PHwA7qJVrj5I4kp7H5tZk',
     appId: '1:487442618923:ios:44a7e99d3438d16d74286e',
