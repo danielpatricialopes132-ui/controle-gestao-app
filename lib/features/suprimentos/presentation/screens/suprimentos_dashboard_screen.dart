@@ -3,6 +3,7 @@ import 'produtos_screen.dart';
 import 'fornecedores_screen.dart';
 import 'ordens_compra_screen.dart';
 import 'estoque_screen.dart';
+import 'contratos_empreiteiro_screen.dart';
 
 class SuprimentosDashboardScreen extends StatelessWidget {
   const SuprimentosDashboardScreen({super.key});
@@ -31,11 +32,20 @@ class SuprimentosDashboardScreen extends StatelessWidget {
             ),
             _buildCard(
               context,
-              title: 'Fornecedores',
+              title: 'Fornecedores & Empreiteiros',
               icon: Icons.local_shipping,
               color: Colors.orange,
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const FornecedoresScreen()));
+              },
+            ),
+            _buildCard(
+              context,
+              title: 'Contratos & Medições',
+              icon: Icons.handshake,
+              color: Colors.indigo,
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ContratosEmpreiteiroScreen()));
               },
             ),
             _buildCard(

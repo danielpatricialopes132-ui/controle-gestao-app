@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/suprimentos_provider.dart';
+import 'historico_precos_modal.dart';
 
 class ProdutosScreen extends ConsumerStatefulWidget {
   const ProdutosScreen({super.key});
@@ -24,10 +25,10 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (modalCtx) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
             left: 16, right: 16, top: 16,
           ),
           child: Column(
@@ -41,7 +42,7 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: unidadeMedida,
+                initialValue: unidadeMedida,
                 decoration: const InputDecoration(labelText: 'Unidade de Medida'),
                 items: ['UN', 'KG', 'SC', 'LT', 'M2', 'M3', 'CX'].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                 onChanged: (v) => unidadeMedida = v!,
@@ -64,9 +65,11 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
                         'precoBase': double.tryParse(precoController.text.replaceAll(',', '.')) ?? 0,
                       }
                     );
-                    if (mounted) Navigator.pop(context);
+                    if (mounted && modalCtx.mounted) Navigator.pop(modalCtx);
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                    }
                   }
                 },
                 child: const Text('Salvar Produto'),
@@ -91,10 +94,23 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
               itemCount: provider.produtos.length,
               itemBuilder: (context, index) {
                 final produto = provider.produtos[index];
-                return ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.inventory_2)),
-                  title: Text(produto['nome']),
-                  subtitle: Text('Medida: ${produto['unidadeMedida']} | Preço Base: R\$ ${produto['precoBase']}'),
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                      child: Icon(Icons.inventory_2, size: 20),
+                    ),
+                    title: Text(produto['nome'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('Medida: ${produto['unidadeMedida']} | Preço Base: R\$ ${produto['precoBase'] ?? 0}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.analytics_outlined, color: Colors.indigo),
+                      tooltip: 'Inteligência de Preços & Custo Médio',
+                      onPressed: () => HistoricoPrecosModal.show(context, produto['id'], produto['nome']),
+                    ),
+                    onTap: () => HistoricoPrecosModal.show(context, produto['id'], produto['nome']),
+                  ),
                 );
               },
             ),

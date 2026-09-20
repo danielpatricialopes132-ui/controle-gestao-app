@@ -59,7 +59,7 @@ class RdoPdfService {
             if (apontamentos.isEmpty)
               pw.Text('Nenhum colaborador registrado no dia.', style: const pw.TextStyle(color: PdfColors.grey700))
             else
-              pw.Table.fromTextArray(
+              pw.TableHelper.fromTextArray(
                 headers: ['Colaborador', 'Função', 'Status', 'Horas', 'Obs'],
                 data: apontamentos.map((ap) => [
                   ap['nome'].toString(),

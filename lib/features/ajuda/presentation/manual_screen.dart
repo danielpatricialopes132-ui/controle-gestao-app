@@ -1,130 +1,157 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../ai/presentation/gemini_chat_widget.dart';
 
-class ManualScreen extends StatelessWidget {
+class ManualScreen extends ConsumerWidget {
   const ManualScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userData = ref.watch(appUserProvider);
+    final ehMaster = userData?['role'] == 'MASTER';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manual do Usuário & Guia Rápido'),
+        title: const Text('Manual do Usuário & Central de Ajuda'),
+        actions: [
+          if (ehMaster)
+            TextButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const GeminiChatDialog(),
+                );
+              },
+              icon: const Icon(Icons.auto_awesome, color: Colors.amber),
+              label: const Text('Ajuda IA Master', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bem-vindo ao ERP DPG Construtoras & Obras', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
-            const SizedBox(height: 16),
-            const Text('Este sistema foi desenvolvido para facilitar a gestão financeira, de obras e de recursos humanos da sua empresa. Abaixo, você encontrará um guia rápido das principais funcionalidades.'),
-            const SizedBox(height: 32),
+            Text('ERP DPG Construtoras & Obras', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.indigo)),
+            const SizedBox(height: 8),
+            const Text('Manual Operacional Oficial atualizado com os recursos da Fase 3: Empreiteiros, Subcontratação, Inteligência de Preços e Auditoria.'),
+            const SizedBox(height: 24),
+
+            if (ehMaster)
+              Container(
+                margin: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [Colors.indigo.shade800, Colors.blue.shade900]),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: Colors.indigo.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Colors.amber, size: 36),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Consultor IA Especialista para <MASTER>', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          const SizedBox(height: 4),
+                          const Text('Tire dúvidas instantâneas sobre deduções tributárias (Art. 31 Lei 8.212/91), adendos contratuais, compliance de canteiro e auditoria.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => const GeminiChatDialog(),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black87),
+                      child: const Text('Abrir IA'),
+                    ),
+                  ],
+                ),
+              ),
             
             _buildSection(
               context,
               icon: Icons.dashboard,
-              title: '1. Dashboard (Início)',
-              content: 'O painel inicial exibe o saldo atual da empresa, contas a pagar por vencimento, status das obras e as últimas movimentações. Caso você seja um Administrador Master, poderá alternar entre as empresas no topo da tela.',
-            ),
-            
-            _buildSection(
-              context,
-              icon: Icons.construction,
-              title: '2. Gestão de Obras',
-              content: 'Nesta seção você cadastra as obras ativas e inativas. Pode acompanhar o progresso geral e o status de cada fase (como Escavação, Alvenaria, Hidráulica). O progresso pode ser editado na visualização detalhada de cada obra.',
-            ),
-            
-            _buildSection(
-              context,
-              icon: Icons.account_balance_wallet,
-              title: '3. Financeiro',
-              content: 'Aba dedicada ao controle de receitas, despesas e vales dos funcionários.\n'
-              '- Lançar Transação: Clique no botão flutuante para adicionar uma receita ou despesa. Selecione a categoria correta para facilitar os relatórios.\n'
-              '- Importação Automática: Importe boletos via PDF ou Notas Fiscais (XML). A Inteligência Artificial (Gemini) fará a leitura automática dos valores e código de barras.\n'
-              '- Previsão de Fluxo de Caixa IA: Clique no ícone de "brilho" para que o CFO Virtual calcule e mostre o risco de déficit de caixa para os próximos 3 meses.\n'
-              '- Configuração Contábil: Cadastre novas categorias no botão de engrenagem.',
-            ),
-            
-            _buildSection(
-              context,
-              icon: Icons.people,
-              title: '4. Recursos Humanos e Empreiteiros',
-              content: 'Aqui você gerencia sua equipe (CLT, Diaristas, RPA e Empreiteiros PJ).\n'
-              '- Apontamento Simplificado: Gere a folha do diário de obra de forma rápida e em lote para todos os presentes na obra.\n'
-              '- Vales e Adiantamentos: Lance adiantamentos que já geram uma Despesa automática no fluxo de caixa.\n'
-              '- Geração de Recibos e Assinatura em Tela: Exporte Holerites, RPAs ou Extratos. Ao gerar, você pode colher a assinatura eletrônica do colaborador com o dedo direto no aplicativo.',
-            ),
-            
-            _buildSection(
-              context,
-              icon: Icons.inventory_2,
-              title: '5. Suprimentos (Compras e Estoque)',
-              content: 'Gestão de materiais e cadeia de suprimentos da empresa.\n'
-              '- Catálogo de Produtos: Cadastre os insumos com suas unidades de medida e preços base.\n'
-              '- Fornecedores: Base de dados dos seus parceiros de negócios.\n'
-              '- Ordens de Compra: Crie e aprove ordens de materiais para as obras. Ao marcar uma ordem como "ENTREGUE", o sistema provisiona automaticamente a despesa no módulo Financeiro da Obra.',
+              title: '1. Dashboard e Multi-Tenant',
+              content: 'Visão executiva em tempo real com saldo em caixa, despesas a vencer e status das obras.\n'
+              '- Cada empresa (Tenant) possui sua identidade própria: logomarca customizada e plano de categorias financeiras configuráveis.\n'
+              '- O perfil MASTER pode navegar livremente entre as empresas pelo seletor de topo.',
             ),
             
             _buildSection(
               context,
               icon: Icons.handshake,
-              title: '6. Vendas e CRM',
-              content: 'O módulo de Vendas ajuda a prospectar clientes e fechar negócios de forma automatizada:\n'
-              '- Clientes: Cadastre dados de contato e faturamento.\n'
-              '- Orçamentos: Monte propostas detalhadas. Se o cliente aprovar, o sistema cria a "Obra" automaticamente!\n'
-              '- Faturas em PDF: Gere orçamentos profissionais e faturas em PDF em 1 clique.',
+              title: '2. Gestão de Empreiteiros, Subcontratação & Contratos',
+              content: 'Módulo completo para controle de terceiros e subcontratados no canteiro:\n'
+              '- Contrato Inicial & Adendos: Registre o contrato inicial com objeto, prazos e taxas pactuadas de retenção (INSS, ISS, IRRF). Registre Adendos de Acréscimo de Valor ou Prorrogação de Prazo, mantendo o saldo contratual atualizado e a trilha legal preservada.\n'
+              '- Subcontratação Hierárquica: Cadastre Empreiteiros Principais e vincule suas empresas Subcontratadas.\n'
+              '- Dedução Legal de Subcontratados (Art. 31 da Lei 8.212/91): Na medição do Empreiteiro Principal, deduza os valores já retidos e recolhidos de subempreiteiros para evitar a bitributação de INSS.\n'
+              '- Integração Financeira: Cada medição registrada e aprovada cria automaticamente a respectiva despesa no módulo Contas a Pagar.',
             ),
 
             _buildSection(
               context,
-              icon: Icons.directions_car,
-              title: '7. Frota e Máquinas',
-              content: 'Controle os ativos pesados e veículos da sua construtora.\n'
-              '- Equipamentos: Cadastro de máquinas e custo diário padrão.\n'
-              '- Alocação: Envie as máquinas para o canteiro e controle o tempo de estadia (gerando custo gerencial automático).\n'
-              '- Manutenções Preventivas: Agende por data a próxima troca de óleo ou revisão da máquina.',
+              icon: Icons.people,
+              title: '3. RH, Presença no Canteiro & Diário de Ponto',
+              content: 'Rastreabilidade completa de equipe própria e terceiros:\n'
+              '- Vínculo Trabalhista: No cadastro do colaborador, defina se é Equipe Própria ou Terceirizado, vinculando-o ao Empreiteiro Principal ou Subcontratado.\n'
+              '- Ponto Administrativo: Lançamento diário de presenças no canteiro (Trabalho, Viagem, Chuva, Falta) com badges visuais que identificam terceiros diretos e subcontratados.\n'
+              '- Mitigação de Riscos: A comprovação rigorosa da presença protege a construtora de passivos de responsabilidade subsidiária trabalhista (Súmula 331 TST).',
             ),
             
             _buildSection(
               context,
-              icon: Icons.picture_as_pdf,
-              title: '8. Relatórios e Exportações em PDF',
-              content: 'Geração de demonstrativos financeiros (DRE), relatórios de obras, saldos e ponto dos colaboradores.\n'
-              '- PDFs Corporativos: Você pode exportar seu DRE, Fluxo de Caixa, RDO (Diário de Obra) com fotos e Extrato do Empreiteiro em PDF com um clique, prontos para enviar via WhatsApp.',
-            ),
-            
-            _buildSection(
-              context,
-              icon: Icons.auto_awesome,
-              title: '9. Assistente Virtual (IA)',
-              content: 'Exclusivo para perfis MASTER, o botão flutuante abre o Assistente de Inteligência Artificial para tirar dúvidas rápidas sobre lançamentos contábeis ou análise de dados, ou gerar Previsão de Fluxo de Caixa.',
+              icon: Icons.price_check,
+              title: '4. Suprimentos & Inteligência de Preços de Insumos',
+              content: 'Controle de custos unitários e comparação de mercado:\n'
+              '- Histórico de Preços: Registro do valor unitário de cada compra de insumo (cimento, areia, aço, brita, etc.).\n'
+              '- Indicadores Analíticos: Custo Médio Ponderado, Menor e Maior Preço Histórico e Ranking comparativo de fornecedores mais vantajosos.\n'
+              '- Alerta de Sobrepreço (>10%): Ao criar uma Ordem de Compra com valor unitário mais de 10% superior ao histórico, o sistema exibe alerta preventivo para negociação.',
             ),
 
             _buildSection(
               context,
-              icon: Icons.wifi_off,
-              title: '10. Modo Offline e PWA / Mobile',
-              content: 'O sistema funciona sem internet?\n'
-              'Sim! No Android ou pelo PWA instalado, você pode apontar horas, bater fotos de diário de obras, e dar baixa no estoque em canteiros sem sinal (Offline-First). Os dados serão enviados automaticamente assim que o celular reconectar ao 4G ou Wi-Fi.\n\n'
-              'Como instalar no celular?\n'
-              'No navegador, busque a opção "Adicionar à Tela Inicial" (PWA) ou baixe o APK para Android para ter acesso a todos os recursos offline.',
+              icon: Icons.auto_stories,
+              title: '5. Revista da Obra (Semanal & Mensal) vs Diário Técnico (RDO)',
+              content: 'Abordagem dual inteligente para comunicação e engenharia:\n'
+              '- Revista Executiva da Obra: Edições em formato Semanal ou Mensal com capa premium, carta do engenheiro, infográficos de clima e avanço, storytelling por ambientes e metas do próximo ciclo (Lookahead). Exportação instantânea em PDF e compartilhamento no WhatsApp.\n'
+              '- Diário Técnico de Obra (RDO): Registro diário com efetivo nominal de trabalhadores próprios e terceiros, condições do tempo, fotos e campos para assinatura do engenheiro.',
             ),
-            
+
+            _buildSection(
+              context,
+              icon: Icons.architecture,
+              title: '6. Gerenciamento de Obras & Coordenação de Terceiros (Fase 6)',
+              content: 'Para empresas que atuam na coordenação de reformas e obras de alto padrão:\n'
+              '- Acompanhamento de empresas contratadas pelo cliente (marcenaria, mármores, automação, ar-condicionado, esquadrias).\n'
+              '- Vistorias de entrega e Punch List (registro de pendências com fotos e prazos).\n'
+              '- Boletins de coordenação orientando a liberação de pagamentos aos terceiros.',
+            ),
+
             _buildSection(
               context,
               icon: Icons.security,
-              title: '11. Segurança e Perfis (RBAC)',
-              content: 'Controle de acesso granular baseado em funções (Role-Based Access Control).\n'
-              '- Perfis como ALMOXARIFE não têm acesso aos módulos financeiros e de RH.\n'
-              '- O sistema conta com uma Trilha de Auditoria que registra aprovações de ordens de compra e pagamentos.',
+              title: '7. Auditoria Detalhada Imutável (Logs)',
+              content: 'Governança e transparência para prestação de contas:\n'
+              '- Tabela de auditoria exclusiva para Administradores mostrando: Quem realizou a ação, O Quê foi alterado (dados anteriores x dados novos), Em Qual Data/Hora e em Qual Módulo.\n'
+              '- Rastreamento completo de edições e exclusões em Transações Financeiras e Ordens de Compra.',
             ),
             
             _buildSection(
               context,
               icon: Icons.school,
-              title: '11. Ambiente de Treinamento (TESTE S/A)',
-              content: 'Precisa treinar um novo funcionário sem afetar os dados reais da sua empresa? Utilize o ambiente de testes.\n'
-              '- Acesse com o login: aluno@testesa.com.br\n'
-              '- O sistema carregará a empresa fictícia "TESTE S/A - Ambiente de Curso". Nela, você pode cadastrar obras, lançar notas e testar todo o ERP sem medo.',
+              title: '8. Treinamento & Apostila Oficial do Sistema',
+              content: 'Ambiente de capacitação prática disponível na empresa TESTE S/A.\n'
+              '- Consulte a apostila completa compartilhável MANUAL_CURSO_TREINAMENTO.md na raiz do sistema para roteiros passo a passo de treinamento de novos colaboradores.',
             ),
           ],
         ),
@@ -134,9 +161,10 @@ class ManualScreen extends StatelessWidget {
 
   Widget _buildSection(BuildContext context, {required IconData icon, required String title, required String content}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0),
+      padding: const EdgeInsets.only(bottom: 20.0),
       child: Card(
-        elevation: 1,
+        elevation: 1.5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -144,13 +172,13 @@ class ManualScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, color: Colors.blueAccent, size: 28),
+                  Icon(icon, color: Colors.indigo, size: 26),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+                  Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
                 ],
               ),
               const SizedBox(height: 12),
-              Text(content, style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.black87)),
+              Text(content, style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87)),
             ],
           ),
         ),

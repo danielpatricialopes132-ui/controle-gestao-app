@@ -261,6 +261,7 @@ class PontoTableForm extends ConsumerStatefulWidget {
 
 class _PontoTableFormState extends ConsumerState<PontoTableForm> {
   final Map<String, dynamic> _rows = {};
+  String _filtroVinculo = 'TODOS'; // 'TODOS' | 'PROPRIO' | 'EMPREITEIRO' | 'SUBCONTRATADO'
 
   @override
   Widget build(BuildContext context) {
@@ -271,12 +272,12 @@ class _PontoTableFormState extends ConsumerState<PontoTableForm> {
 
     return pontoDataAsync.when(
       data: (res) {
-        final funcionarios = res['funcionarios'] as List<dynamic>;
+        final todosFuncionarios = res['funcionarios'] as List<dynamic>;
         final pontosExistentes = res['pontosExistentes'] as List<dynamic>;
 
         // Initialize rows
         if (_rows.isEmpty) {
-          for (var f in funcionarios) {
+          for (var f in todosFuncionarios) {
             final ext = pontosExistentes.firstWhere((p) => p['funcionarioId'] == f['id'], orElse: () => null);
             _rows[f['id']] = {
               'status': ext != null ? ext['status'] : 'NA',
@@ -288,17 +289,67 @@ class _PontoTableFormState extends ConsumerState<PontoTableForm> {
           }
         }
 
-        if (funcionarios.isEmpty) {
+        if (todosFuncionarios.isEmpty) {
           return const Center(child: Text('Nenhum funcionário cadastrado.'));
         }
 
+        // Filtrar funcionários de acordo com o vínculo
+        final funcionarios = todosFuncionarios.where((f) {
+          final fornecedor = f['fornecedor'];
+          if (_filtroVinculo == 'TODOS') return true;
+          if (_filtroVinculo == 'PROPRIO') return fornecedor == null;
+          if (_filtroVinculo == 'SUBCONTRATADO') {
+            return fornecedor != null && (fornecedor['tipoFornecedor'] == 'SUBCONTRATADO' || fornecedor['empreiteiroPai'] != null);
+          }
+          if (_filtroVinculo == 'EMPREITEIRO') {
+            return fornecedor != null && fornecedor['tipoFornecedor'] == 'EMPREITEIRO' && fornecedor['empreiteiroPai'] == null;
+          }
+          return true;
+        }).toList();
+
         return Column(
           children: [
+            // Filtro por vínculo trabalhista
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Text('Filtrar Equipe: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Todos'),
+                    selected: _filtroVinculo == 'TODOS',
+                    onSelected: (_) => setState(() => _filtroVinculo = 'TODOS'),
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text('Equipe Própria'),
+                    selected: _filtroVinculo == 'PROPRIO',
+                    onSelected: (_) => setState(() => _filtroVinculo = 'PROPRIO'),
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text('Empreiteiros Principais'),
+                    selected: _filtroVinculo == 'EMPREITEIRO',
+                    selectedColor: Colors.indigo.shade100,
+                    onSelected: (_) => setState(() => _filtroVinculo = 'EMPREITEIRO'),
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text('Subcontratados'),
+                    selected: _filtroVinculo == 'SUBCONTRATADO',
+                    selectedColor: Colors.purple.shade100,
+                    onSelected: (_) => setState(() => _filtroVinculo = 'SUBCONTRATADO'),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: DataTable(
                   columns: const [
-                    DataColumn(label: Text('Colaborador')),
+                    DataColumn(label: Text('Colaborador / Vínculo')),
                     DataColumn(label: Text('Status Dia')),
                     DataColumn(label: Text('Horas')),
                     DataColumn(label: Text('Obs')),
@@ -306,13 +357,41 @@ class _PontoTableFormState extends ConsumerState<PontoTableForm> {
                   ],
                   rows: funcionarios.map((f) {
                     final row = _rows[f['id']]!;
+                    final fornecedor = f['fornecedor'];
+                    final ehSub = fornecedor != null && (fornecedor['tipoFornecedor'] == 'SUBCONTRATADO' || fornecedor['empreiteiroPai'] != null);
+                    final ehEmp = fornecedor != null && !ehSub;
+
                     return DataRow(cells: [
                       DataCell(Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(f['nome'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text(f['cargo'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text(f['cargo'] ?? 'Sem cargo', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          if (ehSub)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.purple.shade200)),
+                                child: Text(
+                                  'Sub: ${fornecedor['nomeRazao'] ?? fornecedor['nome']}${fornecedor['empreiteiroPai'] != null ? ' (de ${fornecedor['empreiteiroPai']['nomeRazao'] ?? fornecedor['empreiteiroPai']['nome']})' : ''}',
+                                  style: TextStyle(color: Colors.purple.shade900, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            )
+                          else if (ehEmp)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(color: Colors.indigo.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.indigo.shade200)),
+                                child: Text(
+                                  'Empreiteiro: ${fornecedor['nomeRazao'] ?? fornecedor['nome']}',
+                                  style: TextStyle(color: Colors.indigo.shade900, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
                         ],
                       )),
                       DataCell(
