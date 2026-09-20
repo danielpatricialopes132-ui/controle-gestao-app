@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../services/termo_recebimento_pdf_service.dart';
+import '../antes_depois_slider_dialog.dart';
 
 class PunchListRecebimentoView extends StatelessWidget {
   final String obraNome;
@@ -21,6 +23,28 @@ class PunchListRecebimentoView extends StatelessWidget {
     required this.onNovoTermoRecebimento,
     required this.onNovoPunchItem,
   });
+
+  void _enviarWhatsApp(BuildContext context, String texto) async {
+    final url = 'https://wa.me/?text=${Uri.encodeComponent(texto)}';
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Não foi possível abrir o WhatsApp.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao acionar WhatsApp: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +165,9 @@ class PunchListRecebimentoView extends StatelessWidget {
           ...punchList.map((p) {
             final isResolvido = p['status'] == 'RESOLVIDO';
             final terceiro = p['terceiro'];
+            final fotoUrl = p['fotoUrl'] as String?;
+            final ambiente = p['ambiente'] ?? 'Ambiente';
+            final descricao = p['descricao'] ?? '';
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
@@ -156,13 +183,14 @@ class PunchListRecebimentoView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${p['ambiente'] ?? 'Ambiente'} - ${p['descricao']}',
+                        '$ambiente - $descricao',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           decoration: isResolvido ? TextDecoration.lineThrough : null,
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     _buildPunchStatusChip(p['status']),
                   ],
                 ),
@@ -179,6 +207,56 @@ class PunchListRecebimentoView extends StatelessWidget {
                     if (isResolvido && p['dataResolucao'] != null)
                       Text('Resolvido em: ${dateFormat.format(DateTime.parse(p['dataResolucao']))}',
                           style: const TextStyle(fontSize: 11, color: Colors.green)),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        // Botão de Comparação Antes & Depois (Slider Interativo)
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            AntesDepoisSliderDialog.show(
+                              context,
+                              fotoAntesUrl: fotoUrl ?? 'https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&w=800&q=80',
+                              fotoDepoisUrl: fotoUrl ?? 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+                              ambiente: ambiente,
+                              descricao: descricao,
+                            );
+                          },
+                          icon: const Icon(Icons.compare, size: 14, color: Colors.indigo),
+                          label: const Text('Comparar Antes & Depois', style: TextStyle(fontSize: 11, color: Colors.indigo)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            side: BorderSide(color: Colors.indigo.shade200),
+                          ),
+                        ),
+                        // Botão de Notificar WhatsApp
+                        if (!isResolvido && terceiro != null)
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              final baseUrl = Uri.base.origin.isNotEmpty ? Uri.base.origin : 'http://localhost:3000';
+                              final linkPortal = '$baseUrl/portal/terceiro?token=${terceiro['id']}';
+                              final prazoStr = p['prazoCorrecao'] != null
+                                  ? dateFormat.format(DateTime.parse(p['prazoCorrecao']))
+                                  : 'Urgente';
+                              final msg = '⚠️ *NOTIFICAÇÃO DE VISTORIA - OBRA: $obraNome*\n\n'
+                                  'Prezados da *${terceiro['nomeEmpresa']}*,\n'
+                                  'Identificamos uma pendência a ser corrigida na obra:\n'
+                                  '• *Ambiente:* $ambiente\n'
+                                  '• *Descrição:* $descricao\n'
+                                  '• *Prazo estipulado:* $prazoStr\n\n'
+                                  '📱 *Envie a foto de conclusão direto no seu Portal do Montador:*\n$linkPortal';
+                              _enviarWhatsApp(context, msg);
+                            },
+                            icon: const Icon(Icons.send, size: 14, color: Colors.green),
+                            label: const Text('WhatsApp', style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              side: BorderSide(color: Colors.green.shade200),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
                 trailing: isResolvido

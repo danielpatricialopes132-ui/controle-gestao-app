@@ -182,6 +182,16 @@ class ManualScreen extends ConsumerWidget {
               '- Cautela de Retirada de Materiais: Controle de itens que saem da obra para oficina (ex: cubas retiradas por marmorarias), com previsão de retorno e assinaturas digitais na tela do retirante e do encarregado.\n'
               '- Termo de Recebimento de Interiores: Coleta de assinatura digital do cliente na tela após auditoria do Punch List, gerando certidão PDF de entrega formal e aprovação.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.rocket_launch,
+              title: '12. Portal do Montador, WhatsApp & Vistoria Antes/Depois (Fase 7)',
+              content: 'Evoluções estratégicas de integração em tempo real e vistoria imersiva:\n'
+              '- Portal do Montador / Terceiro: Link público seguro compartilhado via WhatsApp (sem necessidade de senha), onde o montador consulta seu crachá digital de liberação na guarita, regras do condomínio e faz upload de fotos da montagem direto da câmera do celular.\n'
+              '- Notificações Automáticas via WhatsApp: Disparo com 1 clique de liberações de portaria e termos de cautela/retirada de peças para marmorarias e marcenarias com mensagens personalizadas.\n'
+              '- Comparador Antes & Depois Interativo: Ferramenta visual com cortina slider para inspecionar a evolução dos ambientes antes e depois da montagem para anexo na Revista de Obra.',
+            ),
           ],
         ),
       ),

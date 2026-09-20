@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../services/termo_portaria_pdf_service.dart';
 import '../../../services/termo_retirada_pdf_service.dart';
 
@@ -22,6 +24,46 @@ class PortariaRetiradasView extends StatelessWidget {
     required this.onNovaPortaria,
     required this.onNovaRetirada,
   });
+
+  void _enviarWhatsApp(BuildContext context, String texto) async {
+    final url = 'https://wa.me/?text=${Uri.encodeComponent(texto)}';
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Não foi possível inicializar o aplicativo do WhatsApp.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao acionar WhatsApp: $e')),
+        );
+      }
+    }
+  }
+
+  void _copiarLinkPortal(BuildContext context, String? terceiroId, String empresaNome) {
+    if (terceiroId == null || terceiroId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Empresa terceira sem identificador para link público.')),
+      );
+      return;
+    }
+    final baseUrl = Uri.base.origin.isNotEmpty ? Uri.base.origin : 'http://localhost:3000';
+    final link = '$baseUrl/portal/terceiro?token=$terceiroId';
+    Clipboard.setData(ClipboardData(text: link));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Link do Portal de $empresaNome copiado para a área de transferência!'),
+        backgroundColor: Colors.green.shade700,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +96,7 @@ class PortariaRetiradasView extends StatelessWidget {
                         children: [
                           Text('CONTROLE DE PORTARIA & ACESSO DE CONDOMÍNIO',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A))),
-                          Text('Emissão de termos de liberação formal para montadores e equipes de interiores',
+                          Text('Emissão de termos de liberação formal e links para o Portal do Montador',
                               style: TextStyle(fontSize: 11, color: Colors.black54)),
                         ],
                       ),
@@ -90,6 +132,8 @@ class PortariaRetiradasView extends StatelessWidget {
                     final dataInicio = lib['dataInicio'] != null ? dateFormat.format(DateTime.parse(lib['dataInicio'])) : '-';
                     final dataFim = lib['dataFim'] != null ? dateFormat.format(DateTime.parse(lib['dataFim'])) : '-';
                     final colaboradores = (lib['colaboradores'] as List<dynamic>?) ?? [];
+                    final terceiroId = lib['terceiroClienteId'] as String?;
+                    final empresaNome = lib['empresaNome'] ?? 'Montador';
 
                     return Card(
                       color: Colors.blue.shade50.withOpacity(0.4),
@@ -108,7 +152,7 @@ class PortariaRetiradasView extends StatelessWidget {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(lib['empresaNome'] ?? 'Empresa', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text(empresaNome, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -151,6 +195,30 @@ class PortariaRetiradasView extends StatelessWidget {
                                   label: const Text('PDF Portaria'),
                                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
                                 ),
+                                const SizedBox(height: 6),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    final baseUrl = Uri.base.origin.isNotEmpty ? Uri.base.origin : 'http://localhost:3000';
+                                    final linkPortal = terceiroId != null ? '$baseUrl/portal/terceiro?token=$terceiroId' : '';
+                                    final msg = '🏗️ *LIBERAÇÃO DE PORTARIA - OBRA: $obraNome*\n\n'
+                                        'Olá equipe da *$empresaNome*,\n'
+                                        'Sua autorização de acesso ao condomínio foi emitida para o período de *$dataInicio* a *$dataFim* (Horário: ${lib['horarioPermitido'] ?? '08:00 às 17:00'}).\n\n'
+                                        '${linkPortal.isNotEmpty ? '📱 *Consulte o Crachá Digital, Regras do Condomínio e Envie Fotos no Portal:* \n$linkPortal' : 'Apresente o termo PDF na guarita.'}';
+                                    _enviarWhatsApp(context, msg);
+                                  },
+                                  icon: const Icon(Icons.send, size: 14, color: Colors.green),
+                                  label: const Text('WhatsApp', style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+                                ),
+                                if (terceiroId != null) ...[
+                                  const SizedBox(height: 4),
+                                  TextButton.icon(
+                                    onPressed: () => _copiarLinkPortal(context, terceiroId, empresaNome),
+                                    icon: const Icon(Icons.link, size: 14, color: Colors.indigo),
+                                    label: const Text('Link Portal', style: TextStyle(fontSize: 10, color: Colors.indigo)),
+                                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2)),
+                                  ),
+                                ],
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
                                   onPressed: () => onDeleteLiberacao(lib['id']),
@@ -227,6 +295,9 @@ class PortariaRetiradasView extends StatelessWidget {
                     final previsao = termo['previsaoDevolucao'] != null ? dateFormat.format(DateTime.parse(termo['previsaoDevolucao'])) : 'Sem data';
                     final isRetirado = termo['status'] == 'RETIRADO';
                     final itens = (termo['itensRetirados'] as List<dynamic>?) ?? [];
+                    final empresaRetirante = termo['empresaRetirante'] ?? 'Empresa Terceira';
+                    final numTermo = termo['numeroTermo'] ?? 'RET-000';
+                    final responsavel = termo['nomeResponsavelRetirada'] ?? 'Responsável';
 
                     return Card(
                       color: isRetirado ? Colors.amber.shade50.withOpacity(0.5) : Colors.green.shade50.withOpacity(0.5),
@@ -245,9 +316,9 @@ class PortariaRetiradasView extends StatelessWidget {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(termo['numeroTermo'] ?? 'RET-000', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                      Text(numTermo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                       const SizedBox(width: 8),
-                                      Text('Empresa: ${termo['empresaRetirante']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                      Text('Empresa: $empresaRetirante', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -258,7 +329,7 @@ class PortariaRetiradasView extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text('Retirado em: $dataRetirada | Previsão de Retorno: $previsao', style: TextStyle(fontSize: 11, color: Colors.grey.shade800)),
-                                  Text('Responsável: ${termo['nomeResponsavelRetirada']} (Doc: ${termo['documentoResponsavel'] ?? 'N/I'})', style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                                  Text('Responsável: $responsavel (Doc: ${termo['documentoResponsavel'] ?? 'N/I'})', style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
                                   const SizedBox(height: 6),
                                   Wrap(
                                     spacing: 6,
@@ -268,6 +339,7 @@ class PortariaRetiradasView extends StatelessWidget {
                                         backgroundColor: Colors.white,
                                         label: Text('${it['quantidade']}x ${it['item']} (${it['estadoConservacao'] ?? 'OK'})', style: const TextStyle(fontSize: 10)),
                                         visualDensity: VisualDensity.compact,
+                                        padding: EdgeInsets.zero,
                                       );
                                     }).toList(),
                                   ),
@@ -285,6 +357,24 @@ class PortariaRetiradasView extends StatelessWidget {
                                   icon: const Icon(Icons.picture_as_pdf, size: 16),
                                   label: const Text('PDF Cautela'),
                                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F766E), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+                                ),
+                                const SizedBox(height: 6),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    final listaItensStr = itens.map((i) => '• ${i['quantidade']}x ${i['item']}').join('\n');
+                                    final msg = '📦 *TERMO DE CAUTELA & RETIRADA DE PEÇAS - OBRA: $obraNome*\n\n'
+                                        'Prezado gestor da *$empresaRetirante*,\n'
+                                        'Confirmamos a saída de materiais sob o *Termo #$numTermo* em *$dataRetirada*.\n'
+                                        'Retirado por: *$responsavel*.\n'
+                                        'Motivo: ${termo['motivoRetirada'] ?? 'Usinagem / Ajuste'}.\n'
+                                        'Previsão de retorno à obra: *$previsao*.\n\n'
+                                        '*Itens sob guarda:*\n$listaItensStr\n\n'
+                                        'O termo digital assinado encontra-se registrado no sistema de gestão da obra.';
+                                    _enviarWhatsApp(context, msg);
+                                  },
+                                  icon: const Icon(Icons.send, size: 14, color: Colors.green),
+                                  label: const Text('WhatsApp', style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
                                 ),
                                 const SizedBox(height: 6),
                                 if (isRetirado)
