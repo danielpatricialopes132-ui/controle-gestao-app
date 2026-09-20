@@ -66,13 +66,22 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
                 ),
               ),
               const SizedBox(width: 12),
-              if (_modo == 0)
+              if (_modo == 0) ...[
+                if (state.terceiros.isNotEmpty)
+                  ElevatedButton.icon(
+                    onPressed: () => _showRegistrarVisitaModal(context, state.terceiros),
+                    icon: const Icon(Icons.event_available, size: 18),
+                    label: const Text('Registrar Visita (S-T-Q-Q-S-S-D)'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+                  ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: () => _showNovoTerceiroModal(context),
                   icon: const Icon(Icons.add),
                   label: const Text('Novo Parceiro do Cliente'),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade800, foregroundColor: Colors.white),
-                )
+                ),
+              ]
               else
                 ElevatedButton.icon(
                   onPressed: () => _showNovoPunchItemModal(context, state.terceiros),
@@ -90,15 +99,15 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
               : state.error != null
                   ? Center(child: Text('Erro: ${state.error}'))
                   : _modo == 0
-                      ? _buildTerceirosView(state.terceiros)
+                      ? _buildTerceirosView(state.terceiros, state.mapaVisitasSemanal)
                       : _buildPunchListView(state.punchList),
         ),
       ],
     );
   }
 
-  // --- SEÇÃO 1: EMPRESAS TERCEIRAS DO CLIENTE & ESTÁGIOS ---
-  Widget _buildTerceirosView(List<dynamic> terceiros) {
+  // --- SEÇÃO 1: EMPRESAS TERCEIRAS DO CLIENTE, ESTÁGIOS & MAPA SEMANAL ---
+  Widget _buildTerceirosView(List<dynamic> terceiros, List<dynamic> mapaSemanal) {
     if (terceiros.isEmpty) {
       return Center(
         child: Column(
@@ -123,41 +132,46 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: terceiros.length,
-      itemBuilder: (context, index) {
-        final t = terceiros[index];
-        final punchList = (t['punchList'] as List<dynamic>?) ?? [];
-        final pendenciasAbertas = punchList.where((p) => p['status'] != 'RESOLVIDO').length;
-        final statusAtual = t['status'] ?? 'CONTRATADO';
-        final idxEstagio = estagiosCiclo.indexOf(statusAtual);
+      children: [
+        _buildMapaVisitasSemanalCard(mapaSemanal, terceiros),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12, top: 4),
+          child: Text('Empresas Parceiras & Ciclo de Fabricação / Instalação',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ),
+        ...terceiros.map((t) {
+          final punchList = (t['punchList'] as List<dynamic>?) ?? [];
+          final pendenciasAbertas = punchList.where((p) => p['status'] != 'RESOLVIDO').length;
+          final statusAtual = t['status'] ?? 'CONTRATADO';
+          final idxEstagio = estagiosCiclo.indexOf(statusAtual);
 
-        return Card(
-          elevation: 2.5,
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: _getEspecialidadeColor(t['especialidade']).withOpacity(0.15),
-                      child: Icon(_getEspecialidadeIcon(t['especialidade']), color: _getEspecialidadeColor(t['especialidade'])),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(t['nomeEmpresa'] ?? 'Empresa', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('Especialidade: ${t['especialidade']}', style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
-                        ],
+          return Card(
+            elevation: 2.5,
+            margin: const EdgeInsets.only(bottom: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: _getEspecialidadeColor(t['especialidade']).withValues(alpha: 0.15),
+                        child: Icon(_getEspecialidadeIcon(t['especialidade']), color: _getEspecialidadeColor(t['especialidade'])),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(t['nomeEmpresa'] ?? 'Empresa', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('Especialidade: ${t['especialidade']}', style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+                          ],
+                        ),
+                      ),
                     _buildStatusEstagioChip(statusAtual),
                     IconButton(
                       icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
@@ -253,9 +267,10 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
             ),
           ),
         );
-      },
-    );
-  }
+      }),
+    ],
+  );
+}
 
   // --- SEÇÃO 2: VISTORIAS & PUNCH LIST ---
   Widget _buildPunchListView(List<dynamic> punchList) {
@@ -635,6 +650,247 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange.shade800, foregroundColor: Colors.white, padding: const EdgeInsets.all(14)),
                   child: const Text('Registrar Pendência na Vistoria'),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapaVisitasSemanalCard(List<dynamic> mapaSemanal, List<dynamic> terceiros) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.indigo.shade50, borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.date_range, color: Colors.indigo, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Mapa Semanal de Visitas dos Terceiros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('Acompanhamento presencial no canteiro (S • T • Q • Q • S • S • D)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _showRegistrarVisitaModal(context, terceiros),
+                  icon: const Icon(Icons.add_location_alt, size: 16),
+                  label: const Text('Registrar Visita'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (mapaSemanal.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                alignment: Alignment.center,
+                child: const Text('Nenhuma visita registrada nesta semana.', style: TextStyle(color: Colors.grey)),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 16,
+                  headingRowColor: WidgetStateProperty.all(Colors.grey.shade100),
+                  columns: const [
+                    DataColumn(label: Text('Parceiro', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Especialidade', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('S', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('T', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('Q', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('Q', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('S', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('S', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('D', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo))),
+                    DataColumn(label: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                  rows: mapaSemanal.map((item) {
+                    final dias = (item['dias'] as Map<String, dynamic>?) ?? {};
+                    Widget buildDiaCell(String diaKey) {
+                      final visitasDia = dias[diaKey] as List<dynamic>?;
+                      if (visitasDia == null || visitasDia.isEmpty) {
+                        return const Center(child: Text('-', style: TextStyle(color: Colors.grey)));
+                      }
+                      final v = visitasDia.first;
+                      final motivo = v['motivo']?.toString() ?? 'Visita';
+                      return InkWell(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${item['nomeEmpresa']}: $motivo (${v['responsavel'] ?? 'Técnico'})')),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade50,
+                            border: Border.all(color: Colors.teal.shade300),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            motivo.length > 7 ? '${motivo.substring(0, 6)}.' : motivo,
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return DataRow(cells: [
+                      DataCell(Text(item['nomeEmpresa'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                      DataCell(Text(item['especialidade'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                      DataCell(buildDiaCell('seg')),
+                      DataCell(buildDiaCell('ter')),
+                      DataCell(buildDiaCell('qua')),
+                      DataCell(buildDiaCell('qui')),
+                      DataCell(buildDiaCell('sex')),
+                      DataCell(buildDiaCell('sab')),
+                      DataCell(buildDiaCell('dom')),
+                      DataCell(Center(
+                        child: Text(
+                          '${item['totalVisitasNaSemana'] ?? 0}x',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                        ),
+                      )),
+                    ]);
+                  }).toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRegistrarVisitaModal(BuildContext context, List<dynamic> terceiros) {
+    if (terceiros.isEmpty) return;
+    String terceiroId = terceiros.first['id'];
+    DateTime dataVisita = DateTime.now();
+    String motivo = 'MEDICAO';
+    final responsavelController = TextEditingController();
+    final obsController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            top: 20, left: 20, right: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Registrar Entrada / Visita de Terceiro na Obra', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: terceiroId,
+                  decoration: const InputDecoration(labelText: 'Empresa Parceira *', border: OutlineInputBorder()),
+                  items: terceiros.map<DropdownMenuItem<String>>((t) => DropdownMenuItem(
+                    value: t['id'] as String,
+                    child: Text('${t['nomeEmpresa']} (${t['especialidade']})'),
+                  )).toList(),
+                  onChanged: (val) => setModalState(() => terceiroId = val ?? terceiroId),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text('Data da Visita: ${dateFormat.format(dataVisita)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: dataVisita,
+                          firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                          lastDate: DateTime.now().add(const Duration(days: 30)),
+                        );
+                        if (picked != null) setModalState(() => dataVisita = picked);
+                      },
+                      icon: const Icon(Icons.calendar_month, size: 16),
+                      label: const Text('Alterar Data'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: motivo,
+                  decoration: const InputDecoration(labelText: 'Finalidade / Motivo da Visita *', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'MEDICAO', child: Text('Medição In Loco de Vãos')),
+                    DropdownMenuItem(value: 'MONTAGEM', child: Text('Montagem / Instalação')),
+                    DropdownMenuItem(value: 'VISTORIA', child: Text('Vistoria Prévia de Entrega')),
+                    DropdownMenuItem(value: 'ALINHAMENTO', child: Text('Alinhamento com Cliente/Arquiteto')),
+                    DropdownMenuItem(value: 'OUTROS', child: Text('Outros Serviços Especializados')),
+                  ],
+                  onChanged: (val) => setModalState(() => motivo = val ?? 'MEDICAO'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: responsavelController,
+                  decoration: const InputDecoration(labelText: 'Técnico / Responsável Presente (Opcional)', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: obsController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(labelText: 'Observações da Visita', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await ref.read(gerenciamentoTerceirosProvider.notifier).registrarVisita(widget.obraId, {
+                        'terceiroClienteId': terceiroId,
+                        'dataVisita': dataVisita.toIso8601String(),
+                        'motivo': motivo,
+                        'responsavel': responsavelController.text.trim().isNotEmpty ? responsavelController.text.trim() : null,
+                        'observacoes': obsController.text.trim().isNotEmpty ? obsController.text.trim() : null,
+                      });
+                      if (context.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Visita registrada com sucesso no Mapa Semanal!'), backgroundColor: Colors.green),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white, padding: const EdgeInsets.all(14)),
+                  child: const Text('Salvar Visita no Mapa Semanal'),
                 ),
                 const SizedBox(height: 24),
               ],

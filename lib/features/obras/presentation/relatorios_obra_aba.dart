@@ -455,6 +455,7 @@ class _RelatoriosObraAbaState extends ConsumerState<RelatoriosObraAba> {
       climaDiasChuva: rev['climaDiasChuva'] ?? 0,
       percentualAvanco: (rev['percentualAvanco'] as num?)?.toDouble() ?? 0.0,
       fotos: (rev['fotosSelecionadas'] as List<dynamic>?) ?? [],
+      mapaVisitas: (rev['mapaVisitas'] as List<dynamic>?),
     );
   }
 
@@ -644,6 +645,41 @@ class _RelatoriosObraAbaState extends ConsumerState<RelatoriosObraAba> {
               const SizedBox(height: 12),
               const Text('Lookahead (Próximos Passos):', style: TextStyle(fontWeight: FontWeight.bold)),
               Text(rev['lookahead'] ?? '', style: const TextStyle(fontSize: 13)),
+              if (rev['mapaVisitas'] != null && (rev['mapaVisitas'] as List).isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(),
+                const Text('Mapa Semanal de Visitas dos Terceiros (S • T • Q • Q • S • S • D):',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
+                const SizedBox(height: 8),
+                ...((rev['mapaVisitas'] as List).map((m) {
+                  final dias = (m['dias'] as Map<String, dynamic>?) ?? {};
+                  String formatVisitas(String dia) {
+                    final l = dias[dia] as List<dynamic>?;
+                    return (l != null && l.isNotEmpty) ? '✓' : '-';
+                  }
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(4)),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text('${m['nomeEmpresa']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            'S:${formatVisitas('seg')}  T:${formatVisitas('ter')}  Q:${formatVisitas('qua')}  Q:${formatVisitas('qui')}  S:${formatVisitas('sex')}  S:${formatVisitas('sab')}  D:${formatVisitas('dom')}',
+                            style: const TextStyle(fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold, color: Colors.teal),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                })),
+              ],
             ],
           ),
         ),

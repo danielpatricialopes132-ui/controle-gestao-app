@@ -153,6 +153,25 @@ class ManualScreen extends ConsumerWidget {
               content: 'Ambiente de capacitação prática disponível na empresa TESTE S/A.\n'
               '- Consulte a apostila completa compartilhável MANUAL_CURSO_TREINAMENTO.md na raiz do sistema para roteiros passo a passo de treinamento de novos colaboradores.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.auto_stories,
+              title: '9. Relatórios de Obra: Revista Executiva vs RDO Técnico',
+              content: 'Comunicação executiva e rigor técnico lado a lado:\n'
+              '- Revista da Obra (Semanal / Mensal): Publicação diagramada em alta resolução com editorial do engenheiro, infográficos de clima (sol vs chuva), avanço físico e fotos por ambiente.\n'
+              '- Diário Técnico (RDO): Histórico nominal diário do efetivo no canteiro (CLT, diaristas, empreiteiros e subcontratados) com documento formal para assinatura técnica.',
+            ),
+
+            _buildSection(
+              context,
+              icon: Icons.architecture,
+              title: '10. Coordenação de Terceiros & Mapa Semanal (S-T-Q-Q-S-S-D)',
+              content: 'Gestão de obras de interiores e empresas contratadas pelo cliente:\n'
+              '- Rastreamento do ciclo de vida: Contratado ➔ Medição In Loco ➔ Fabricação ➔ Pronto Entrega ➔ Montagem ➔ Entregue e Aprovado.\n'
+              '- Mapa Semanal de Visitas (S • T • Q • Q • S • S • D): Registro presencial com dias da semana e motivo (medição, montagem, vistoria), impresso automaticamente no Boletim Semanal da Obra.\n'
+              '- Vistorias de Recebimento & Punch List: Gestão de não-conformidades com prazos de resolução.',
+            ),
           ],
         ),
       ),
