@@ -172,6 +172,16 @@ class ManualScreen extends ConsumerWidget {
               '- Mapa Semanal de Visitas (S • T • Q • Q • S • S • D): Registro presencial com dias da semana e motivo (medição, montagem, vistoria), impresso automaticamente no Boletim Semanal da Obra.\n'
               '- Vistorias de Recebimento & Punch List: Gestão de não-conformidades com prazos de resolução.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.verified_user,
+              title: '11. Portaria Condominial, Cautela de Retirada & Assinatura Digital',
+              content: 'Segurança patrimonial, controle de acesso e formalização de entrega:\n'
+              '- Liberação de Portaria & Acesso: Emissão de termos formais para o condomínio com relação nominal de montadores, RGs, CPFs, veículos e regras de serviço para entrega na guarita.\n'
+              '- Cautela de Retirada de Materiais: Controle de itens que saem da obra para oficina (ex: cubas retiradas por marmorarias), com previsão de retorno e assinaturas digitais na tela do retirante e do encarregado.\n'
+              '- Termo de Recebimento de Interiores: Coleta de assinatura digital do cliente na tela após auditoria do Punch List, gerando certidão PDF de entrega formal e aprovação.',
+            ),
           ],
         ),
       ),
