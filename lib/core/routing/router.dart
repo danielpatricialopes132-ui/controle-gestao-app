@@ -7,6 +7,7 @@ import '../../features/financeiro/presentation/configuracao_contabil_screen.dart
 import '../../features/relatorios/presentation/relatorios_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/financeiro/presentation/calculadora/calculadora_financeira_screen.dart';
+import '../../features/portal_cliente/presentation/screens/portal_cliente_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -34,6 +35,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/dashboard',
       builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: '/portal-cliente',
+      builder: (context, state) => const PortalClienteScreen(),
     ),
   ],
 );

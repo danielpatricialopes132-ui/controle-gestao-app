@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/aprovacao_financeira_provider.dart';
+import '../../providers/aprovacao_financeira_provider.dart';
 
 class AprovacoesPendentesScreen extends ConsumerStatefulWidget {
   const AprovacoesPendentesScreen({super.key});

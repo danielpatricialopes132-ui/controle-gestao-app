@@ -33,6 +33,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         
         if (role == 'MASTER') {
           context.go('/select-tenant');
+        } else if (role == 'CLIENTE') {
+          context.go('/portal-cliente');
         } else if (status == 'PENDENTE') {
           context.go('/dashboard');
         } else {

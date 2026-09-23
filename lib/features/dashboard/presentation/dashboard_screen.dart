@@ -37,6 +37,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(appUserProvider);
+      if (user != null && user['role'] == 'CLIENTE') {
+        context.go('/portal-cliente');
+      }
+    });
     _loadTenantsIfMaster();
   }
 

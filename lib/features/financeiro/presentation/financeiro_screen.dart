@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/financeiro_provider.dart';
 import '../../rh/providers/rh_provider.dart' hide valesProvider;
+import '../../auth/providers/auth_provider.dart';
 import 'transacao_modal.dart';
 import 'vale_modal.dart';
 import 'dart:convert';
@@ -33,6 +34,12 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(appUserProvider);
+      if (user != null && user['role'] == 'CLIENTE') {
+        context.go('/portal-cliente');
+      }
+    });
     _tabController = TabController(length: 2, vsync: this);
   }
 
