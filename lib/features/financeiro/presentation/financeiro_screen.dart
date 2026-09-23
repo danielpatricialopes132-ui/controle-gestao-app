@@ -18,6 +18,7 @@ import 'widgets/calculadora_financeira_modal.dart';
 import 'screens/ofx_import_screen.dart';
 import 'screens/previsao_ia_screen.dart';
 import 'screens/importacao_csv_screen.dart';
+import 'screens/aprovacoes_pendentes_screen.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
@@ -79,6 +80,11 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             icon: const Icon(Icons.calculate),
             tooltip: 'Calculadora',
             onPressed: () => CalculadoraFinanceiraModal.show(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.fact_check, color: Colors.orange),
+            tooltip: 'Aprovações Pendentes',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AprovacoesPendentesScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.import_export),

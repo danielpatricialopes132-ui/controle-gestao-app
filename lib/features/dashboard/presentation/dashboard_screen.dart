@@ -20,6 +20,7 @@ import '../../ai/presentation/gemini_chat_widget.dart';
 import '../../ajuda/presentation/manual_screen.dart';
 import 'package:intl/intl.dart';
 import 'widgets/dre_dashboard_view.dart';
+import '../../biblioteca_tecnica/presentation/screens/biblioteca_tecnica_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -406,6 +407,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Navigator.pop(context);
           },
         ),
+      const Divider(),
+      ListTile(
+        leading: const Icon(Icons.library_books),
+        title: const Text('Biblioteca Técnica'),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BibliotecaTecnicaScreen()),
+          );
+        },
+      ),
     ];
   }
 
