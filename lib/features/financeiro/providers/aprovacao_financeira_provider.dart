@@ -29,28 +29,24 @@ class AprovacaoFinanceiraState {
   }
 }
 
-class AprovacaoFinanceiraNotifier extends StateNotifier<AprovacaoFinanceiraState> {
-  final Ref ref;
-
-  AprovacaoFinanceiraNotifier(this.ref) : super(AprovacaoFinanceiraState());
+class AprovacaoFinanceiraNotifier extends Notifier<AprovacaoFinanceiraState> {
+  @override
+  AprovacaoFinanceiraState build() {
+    return AprovacaoFinanceiraState();
+  }
 
   Future<void> fetchPendentes() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final token = await ref.read(authProvider.notifier).getToken();
-      if (token == null) throw Exception('Usuário não autenticado');
-
-      final url = Uri.parse('${EnvConfig.apiUrl}/financeiro/transacoes?statusAprovacao=PENDENTE');
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data'] as List;
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/financeiro/transacoes?statusAprovacao=PENDENTE');
+      
+      if (response != null && response['data'] != null) {
+        final data = response['data'] as List;
         final list = data.map((e) => TransacaoFinanceira.fromJson(e)).toList();
         state = state.copyWith(isLoading: false, transacoesPendentes: list);
       } else {
-        throw Exception('Erro ao buscar transações pendentes: ${response.body}');
+        throw Exception('Formato de resposta inválido');
       }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -67,23 +63,17 @@ class AprovacaoFinanceiraNotifier extends StateNotifier<AprovacaoFinanceiraState
 
   Future<bool> _atualizarStatusMassa(List<String> ids, String acao) async {
     try {
-      final token = await ref.read(authProvider.notifier).getToken();
-      if (token == null) return false;
-
-      final url = Uri.parse('${EnvConfig.apiUrl}/financeiro/transacoes/aprovacao-massa');
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
+      final api = ref.read(apiClientProvider);
+      
+      final response = await api.put(
+        '/financeiro/transacoes/aprovacao-massa',
+        data: {
           'transacoesIds': ids,
           'acao': acao,
-        }),
+        },
       );
 
-      if (response.statusCode == 200) {
+      if (response != null) {
         // Remove as atualizadas da lista local
         final pendentesAtualizadas = state.transacoesPendentes
             .where((t) => !ids.contains(t.id))
@@ -99,7 +89,6 @@ class AprovacaoFinanceiraNotifier extends StateNotifier<AprovacaoFinanceiraState
   }
 }
 
-final aprovacaoFinanceiraProvider =
-    StateNotifierProvider<AprovacaoFinanceiraNotifier, AprovacaoFinanceiraState>((ref) {
-  return AprovacaoFinanceiraNotifier(ref);
+final aprovacaoFinanceiraProvider = NotifierProvider<AprovacaoFinanceiraNotifier, AprovacaoFinanceiraState>(() {
+  return AprovacaoFinanceiraNotifier();
 });
