@@ -19,6 +19,7 @@ import '../../auth/providers/tenant_provider.dart';
 import '../../ai/presentation/gemini_chat_widget.dart';
 import '../../ajuda/presentation/manual_screen.dart';
 import 'package:intl/intl.dart';
+import 'widgets/dre_dashboard_view.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -535,7 +536,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               );
             }
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
+          
+          // DRE Dashboard
+          const DreDashboardView(),
+
+          const SizedBox(height: 32),
           
           // Row 2: Vencimentos and Obras
           Row(

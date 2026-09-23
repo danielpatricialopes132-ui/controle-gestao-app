@@ -76,20 +76,28 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Resumo Financeiro', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text('Resumo Financeiro (Fluxo de Caixa)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               Wrap(
                 spacing: 16,
                 runSpacing: 16,
                 children: [
-                  _buildMetricCard('Valor Original', data.receitasContrato, Colors.blue),
-                  _buildMetricCard('Aditivos', data.receitasAdendos, Colors.orange),
-                  _buildMetricCard('Despesas', data.despesasTotal, Colors.red),
-                  _buildMetricCard('Resultado (Lucro Bruto)', data.lucroPresumido, data.lucroPresumido >= 0 ? Colors.green : Colors.red),
+                  _buildMetricCard('Receitas Totais', data.receitasTotal, Colors.blue),
+                  _buildMetricCard('Despesas Realizadas', data.despesasTotal, Colors.red),
+                  _buildMetricCard('Orçamento Previsto', data.totalOrcado, Colors.orange),
+                  _buildMetricCard('Resultado (Lucro/Prejuízo)', data.lucro, data.lucro >= 0 ? Colors.green : Colors.red),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text('Margem de Lucro: ${data.margemLucro.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 32),
+                  Text('Despesas / Orçamento: ${data.percentualCustoOrcamento.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 32),
-              const Text('Centro de Custo (Despesas)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text('Despesas por Categoria', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildCentroCustoList(data),
             ],
@@ -124,23 +132,22 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
   }
 
   Widget _buildCentroCustoList(DashboardData data) {
+    if (data.despesasPorCategoria.isEmpty) {
+      return const Text('Nenhuma despesa registrada.');
+    }
+
     return Column(
-      children: [
-        ListTile(
-          title: const Text('Fornecedores & Materiais (Pagos)'),
-          trailing: Text('R\$ ${data.despesasPagas.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        ),
-        const Divider(),
-        ListTile(
-          title: const Text('Mão de Obra (Folha + Diárias)'),
-          trailing: Text('R\$ ${data.despesasMaoDeObra.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        ),
-        const Divider(),
-        ListTile(
-          title: const Text('Contas a Pagar (Pendentes)'),
-          trailing: Text('R\$ ${data.despesasPendentes.toStringAsFixed(2)}', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-        ),
-      ],
+      children: data.despesasPorCategoria.map((item) {
+        return Column(
+          children: [
+            ListTile(
+              title: Text(item['categoria']),
+              trailing: Text('R\$ ${(item['valor'] as num).toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ),
+            const Divider(),
+          ],
+        );
+      }).toList(),
     );
   }
 

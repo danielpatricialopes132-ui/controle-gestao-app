@@ -4,36 +4,36 @@ import '../../../../core/network/api_client.dart';
 
 // Modelos simples
 class DashboardData {
-  final double receitasContrato;
-  final double receitasAdendos;
   final double receitasTotal;
-  final double despesasPagas;
-  final double despesasPendentes;
-  final double despesasMaoDeObra;
   final double despesasTotal;
-  final double lucroPresumido;
+  final double lucro;
+  final double margemLucro;
+  final double totalOrcado;
+  final double percentualCustoOrcamento;
+  final List<dynamic> despesasPorCategoria;
+  final String obraNome;
 
   DashboardData({
-    required this.receitasContrato,
-    required this.receitasAdendos,
     required this.receitasTotal,
-    required this.despesasPagas,
-    required this.despesasPendentes,
-    required this.despesasMaoDeObra,
     required this.despesasTotal,
-    required this.lucroPresumido,
+    required this.lucro,
+    required this.margemLucro,
+    required this.totalOrcado,
+    required this.percentualCustoOrcamento,
+    required this.despesasPorCategoria,
+    required this.obraNome,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
     return DashboardData(
-      receitasContrato: (json['receitas']['contratoPrincipal'] ?? 0).toDouble(),
-      receitasAdendos: (json['receitas']['adendos'] ?? 0).toDouble(),
-      receitasTotal: (json['receitas']['total'] ?? 0).toDouble(),
-      despesasPagas: (json['despesas']['pagas'] ?? 0).toDouble(),
-      despesasPendentes: (json['despesas']['pendentes'] ?? 0).toDouble(),
-      despesasMaoDeObra: (json['despesas']['maoDeObra'] ?? 0).toDouble(),
-      despesasTotal: (json['despesas']['total'] ?? 0).toDouble(),
-      lucroPresumido: (json['lucroPresumido'] ?? 0).toDouble(),
+      receitasTotal: (json['financeiro']['totalReceitas'] ?? 0).toDouble(),
+      despesasTotal: (json['financeiro']['totalDespesas'] ?? 0).toDouble(),
+      lucro: (json['financeiro']['lucro'] ?? 0).toDouble(),
+      margemLucro: (json['financeiro']['margemLucro'] ?? 0).toDouble(),
+      totalOrcado: (json['financeiro']['totalOrcado'] ?? 0).toDouble(),
+      percentualCustoOrcamento: (json['financeiro']['percentualCustoOrcamento'] ?? 0).toDouble(),
+      despesasPorCategoria: json['despesasPorCategoria'] ?? [],
+      obraNome: json['obra']['nome'] ?? '',
     );
   }
 }
