@@ -169,9 +169,71 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildNavigationRail(bool isMaster, String role) {
     bool hasRole(List<String> roles) => isMaster || roles.contains(role);
+    final allowedDestinations = <MapEntry<int, NavigationRailDestination>>[
+      if (hasRole(['ENGENHARIA', 'FINANCEIRO', 'ALMOXARIFE', 'RH']))
+        const MapEntry(0, NavigationRailDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard),
+          label: Text('Início'),
+        )),
+      if (hasRole(['ENGENHARIA']))
+        const MapEntry(1, NavigationRailDestination(
+          icon: Icon(Icons.construction_outlined),
+          selectedIcon: Icon(Icons.construction),
+          label: Text('Obras'),
+        )),
+      if (hasRole(['FINANCEIRO']))
+        const MapEntry(2, NavigationRailDestination(
+          icon: Icon(Icons.account_balance_wallet_outlined),
+          selectedIcon: Icon(Icons.account_balance_wallet),
+          label: Text('Financeiro'),
+        )),
+      if (hasRole(['RH']))
+        const MapEntry(3, NavigationRailDestination(
+          icon: Icon(Icons.people_outline),
+          selectedIcon: Icon(Icons.people),
+          label: Text('RH'),
+        )),
+      if (hasRole(['VENDAS']))
+        const MapEntry(4, NavigationRailDestination(
+          icon: Icon(Icons.contacts_outlined),
+          selectedIcon: Icon(Icons.contacts),
+          label: Text('Agenda'),
+        )),
+      if (hasRole(['ALMOXARIFE', 'ENGENHARIA', 'FINANCEIRO']))
+        const MapEntry(5, NavigationRailDestination(
+          icon: Icon(Icons.inventory_2_outlined),
+          selectedIcon: Icon(Icons.inventory_2),
+          label: Text('Suprimentos'),
+        )),
+      if (hasRole(['VENDAS']))
+        const MapEntry(6, NavigationRailDestination(
+          icon: Icon(Icons.handshake_outlined),
+          selectedIcon: Icon(Icons.handshake),
+          label: Text('Vendas / CRM'),
+        )),
+      if (hasRole(['ENGENHARIA', 'ALMOXARIFE']))
+        const MapEntry(7, NavigationRailDestination(
+          icon: Icon(Icons.directions_car_outlined),
+          selectedIcon: Icon(Icons.directions_car),
+          label: Text('Frota'),
+        )),
+      if (isMaster)
+        const MapEntry(8, NavigationRailDestination(
+          icon: Icon(Icons.admin_panel_settings_outlined),
+          selectedIcon: Icon(Icons.admin_panel_settings),
+          label: Text('Admin'),
+        )),
+    ];
+
+    int relativeIndex = allowedDestinations.indexWhere((entry) => entry.key == _selectedIndex);
+    if (relativeIndex == -1 && allowedDestinations.isNotEmpty) {
+      relativeIndex = 0; // Fallback
+    }
+
     return NavigationRail(
-      selectedIndex: _selectedIndex,
-      onDestinationSelected: _onItemTapped,
+      selectedIndex: allowedDestinations.isEmpty ? null : relativeIndex,
+      onDestinationSelected: (idx) => _onItemTapped(allowedDestinations[idx].key),
       labelType: NavigationRailLabelType.all,
       leading: Padding(
         padding: const EdgeInsets.only(bottom: 24.0, top: 16.0),
@@ -180,62 +242,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: const Icon(Icons.business),
         ),
       ),
-      destinations: [
-        if (hasRole(['ENGENHARIA', 'FINANCEIRO', 'ALMOXARIFE', 'RH']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: Text('Início'),
-          ),
-        if (hasRole(['ENGENHARIA']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.construction_outlined),
-            selectedIcon: Icon(Icons.construction),
-            label: Text('Obras'),
-          ),
-        if (hasRole(['FINANCEIRO']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet),
-            label: Text('Financeiro'),
-          ),
-        if (hasRole(['RH']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: Text('RH'),
-          ),
-        if (hasRole(['VENDAS']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.contacts_outlined),
-            selectedIcon: Icon(Icons.contacts),
-            label: Text('Agenda'),
-          ),
-        if (hasRole(['ALMOXARIFE', 'ENGENHARIA', 'FINANCEIRO']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
-            label: Text('Suprimentos'),
-          ),
-        if (hasRole(['VENDAS']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.handshake_outlined),
-            selectedIcon: Icon(Icons.handshake),
-            label: Text('Vendas / CRM'),
-          ),
-        if (hasRole(['ENGENHARIA', 'ALMOXARIFE']))
-          const NavigationRailDestination(
-            icon: Icon(Icons.directions_car_outlined),
-            selectedIcon: Icon(Icons.directions_car),
-            label: Text('Frota'),
-          ),
-        if (isMaster)
-          const NavigationRailDestination(
-            icon: Icon(Icons.admin_panel_settings_outlined),
-            selectedIcon: Icon(Icons.admin_panel_settings),
-            label: Text('Admin'),
-          ),
-      ],
+      destinations: allowedDestinations.map((e) => e.value).toList(),
       trailing: Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: Column(

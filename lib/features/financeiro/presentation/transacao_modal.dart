@@ -80,9 +80,10 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
       padding: const EdgeInsets.all(24.0),
       child: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,6 +265,7 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                     'descricao': _descricaoController.text,
                     'valor': _valorController.text.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
                     'categoriaId': _categoriaSelecionada,
+                    'planoContaId': _categoriaSelecionada,
                     'obraId': _obraSelecionada,
                     'contaBancariaId': _contaBancariaSelecionada,
                     'dataVencimento': _dataVencimento.toIso8601String(),
@@ -305,6 +307,7 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
           ],
         ),
       ),
+    ),
     );
   }
 }

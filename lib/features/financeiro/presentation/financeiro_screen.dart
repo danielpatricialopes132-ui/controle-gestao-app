@@ -408,7 +408,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                       const Icon(Icons.attachment, size: 16, color: Colors.blue),
                     const SizedBox(width: 4),
                     Text(
-                      'R\$ ${double.parse(t['valor'].toString()).toStringAsFixed(2)}',
+                      'R\$ ${(double.tryParse(t['valor']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
                       style: TextStyle(
                         color: isReceita ? Colors.green : Colors.red,
                         fontWeight: FontWeight.bold,
@@ -491,7 +491,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'R\$ ${double.parse(v['valor'].toString()).toStringAsFixed(2)}',
+                          'R\$ ${(double.tryParse(v['valor']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 14),
                         ),
                         Container(

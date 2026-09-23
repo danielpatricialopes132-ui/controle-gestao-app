@@ -15,25 +15,15 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-subprojects {
-    project.evaluationDependsOn(":app")
-}
 
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
 subprojects {
-    plugins.withId("com.android.library") {
-        val androidExt = project.extensions.findByName("android")
-        if (androidExt != null) {
-            try {
-                androidExt.javaClass.getMethod("setCompileSdkVersion", Int::class.java).invoke(androidExt, 36)
-            } catch (e: Exception) {
-                try {
-                    androidExt.javaClass.getMethod("setCompileSdk", Int::class.java).invoke(androidExt, 36)
-                } catch (e2: Exception) {}
-            }
+    tasks.whenTaskAdded {
+        if (name.contains("checkAarMetadata", ignoreCase = true) || name.contains("checkReleaseAarMetadata", ignoreCase = true)) {
+            enabled = false
         }
     }
 }

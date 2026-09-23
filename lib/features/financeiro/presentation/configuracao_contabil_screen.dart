@@ -83,7 +83,7 @@ class _ConfiguracaoContabilScreenState extends ConsumerState<ConfiguracaoContabi
     try {
       await ref.read(apiClientProvider).post('/financeiro/contas-bancarias', {
         'nome': nome,
-        'saldoInicial': saldoTexto.isEmpty ? 0 : double.parse(saldoTexto),
+        'saldoInicial': saldoTexto.isEmpty ? 0 : (double.tryParse(saldoTexto) ?? 0),
       });
       _nomeBancoController.clear();
       _saldoInicialController.clear();
@@ -105,6 +105,61 @@ class _ConfiguracaoContabilScreenState extends ConsumerState<ConfiguracaoContabi
       }
     }
   }
+
+  void _mostrarEdicaoConta(Map<String, dynamic> conta) {
+    final nomeController = TextEditingController(text: conta['nome']);
+    final saldoController = TextEditingController(text: conta['saldoInicial']?.toString() ?? '0');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Editar Conta'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nomeController,
+              decoration: const InputDecoration(labelText: 'Nome da Conta', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: saldoController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Saldo Inicial (R\$)', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () async {
+              final nome = nomeController.text.trim();
+              final saldoTexto = saldoController.text.trim().replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim();
+              
+              if (nome.isEmpty) return;
+              
+              try {
+                await ref.read(apiClientProvider).put('/financeiro/contas-bancarias/${conta['id']}', {
+                  'nome': nome,
+                  'saldoInicial': saldoTexto.isEmpty ? 0 : (double.tryParse(saldoTexto) ?? 0),
+                });
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  ref.invalidate(contasBancariasProvider);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao editar: $e')));
+                }
+              }
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -291,10 +346,19 @@ class _ConfiguracaoContabilScreenState extends ConsumerState<ConfiguracaoContabi
                                     child: ListTile(
                                       leading: const Icon(Icons.account_balance, color: Colors.blueGrey),
                                       title: Text(conta['nome'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                      subtitle: Text('Saldo Atual: R\$ ${double.parse(conta['saldoAtual'].toString()).toStringAsFixed(2)}'),
-                                      trailing: IconButton(
-                                        icon: const Icon(Icons.close, color: Colors.red),
-                                        onPressed: () => _excluirContaBancaria(conta['id']),
+                                      subtitle: Text('Saldo Atual: R\$ ${(double.tryParse(conta['saldoAtual']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}'),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blue),
+                                            onPressed: () => _mostrarEdicaoConta(conta),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () => _excluirContaBancaria(conta['id']),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   );
