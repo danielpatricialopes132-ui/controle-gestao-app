@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../providers/dashboard_provider.dart';
+import '../../providers/dashboard_provider.dart';
 
 class DreDashboardView extends ConsumerStatefulWidget {
   const DreDashboardView({Key? key}) : super(key: key);
@@ -197,7 +197,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
                             case 4: text = 'L. Líquido'; break;
                             default: text = ''; break;
                           }
-                          return SideTitleWidget(axisSide: meta.axisSide, space: 4, child: Text(text, style: style));
+                          return SideTitleWidget(meta: meta, space: 4, child: Text(text, style: style));
                         },
                       ),
                     ),

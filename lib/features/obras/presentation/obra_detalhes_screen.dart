@@ -6,6 +6,8 @@ import 'ged_aba.dart';
 import 'cronograma_aba.dart';
 import 'relatorios_obra_aba.dart';
 import 'gerenciamento_terceiros_aba.dart';
+import 'bim_viewer_aba.dart';
+import 'vistoria_360_aba.dart';
 
 class ObraDetalhesScreen extends ConsumerStatefulWidget {
   final String obraId;
@@ -23,7 +25,7 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 8, vsync: this);
   }
 
   @override
@@ -42,6 +44,8 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
           isScrollable: true,
           tabs: const [
             Tab(text: 'Dashboard Financeiro', icon: Icon(Icons.bar_chart)),
+            Tab(text: 'BIM Viewer', icon: Icon(Icons.view_in_ar)),
+            Tab(text: 'Vistoria 360', icon: Icon(Icons.threed_rotation)),
             Tab(text: 'Revista & Diário (RDO)', icon: Icon(Icons.auto_stories)),
             Tab(text: 'Coordenação Terceiros', icon: Icon(Icons.architecture)),
             Tab(text: 'Aditivos e Contratos', icon: Icon(Icons.assignment)),
@@ -52,8 +56,11 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const NeverScrollableScrollPhysics(), // Evita conflitos de gestos com BIM e 360
         children: [
           _buildDashboardTab(),
+          BimViewerAba(obraId: widget.obraId),
+          Vistoria360Aba(obraId: widget.obraId),
           RelatoriosObraAba(obraId: widget.obraId, obraNome: widget.obraNome),
           GerenciamentoTerceirosAba(obraId: widget.obraId, obraNome: widget.obraNome),
           _buildAditivosTab(),

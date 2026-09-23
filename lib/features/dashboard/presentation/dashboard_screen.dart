@@ -118,7 +118,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       drawer: isDesktop ? null : _buildDrawer(userData?['email'], isMaster, userData?['role'] ?? 'USER'),
       body: Row(
         children: [
-          if (isDesktop) _buildNavigationRail(isMaster, userData?['role'] ?? 'USER'),
+          if (isDesktop) 
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: _buildNavigationRail(isMaster, userData?['role'] ?? 'USER'),
+                    ),
+                  ),
+                );
+              },
+            ),
           if (isDesktop) const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: _buildContent(_selectedIndex, isMaster),

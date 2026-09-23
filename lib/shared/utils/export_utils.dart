@@ -13,7 +13,7 @@ class ExportUtils {
     required List<List<dynamic>> rows,
   }) async {
     try {
-      String csv = const ListToCsvConverter(fieldDelimiter: ';').convert(rows);
+      String csv = rows.map((r) => r.map((c) => c.toString().replaceAll(';', ',')).join(';')).join('\n');
       final Uint8List bytes = Uint8List.fromList(csv.codeUnits);
 
       await Share.shareXFiles(

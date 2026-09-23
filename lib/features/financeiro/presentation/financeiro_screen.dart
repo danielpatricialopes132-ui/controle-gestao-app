@@ -17,6 +17,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'widgets/calculadora_financeira_modal.dart';
 import 'screens/ofx_import_screen.dart';
 import 'screens/previsao_ia_screen.dart';
+import 'screens/importacao_csv_screen.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
@@ -59,6 +60,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                       'Bem-vindo ao módulo Financeiro!\n\n'
                       'Aqui você controla o caixa e as despesas da empresa:\n\n'
                       '• Lançamentos: Clique no botão + abaixo para lançar despesas, receitas ou usar a IA para ler boletos e contas através de fotos ou PDFs.\n'
+                      '• Importação Inteligente (CSV): Utilize o ícone superior (tabela) para importar, conciliar obras/contas e cadastrar transações em lote com checagem de duplicidade.\n'
                       '• Livro Caixa: Acompanhe todas as movimentações aprovadas e pendentes (ex: Faturas de folha de pagamento).\n'
                       '• Vales: Controle adiantamentos feitos a funcionários.',
                     ),
@@ -82,6 +84,11 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             icon: const Icon(Icons.import_export),
             tooltip: 'Conciliação OFX',
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfxImportScreen())),
+          ),
+          IconButton(
+            icon: const Icon(Icons.table_view),
+            tooltip: 'Importar CSV',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportacaoCsvScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.auto_awesome),
