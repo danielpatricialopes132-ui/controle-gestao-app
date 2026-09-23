@@ -62,7 +62,7 @@ class AprovacaoFinanceiraNotifier extends Notifier<AprovacaoFinanceiraState> {
       
       final response = await api.put(
         '/financeiro/transacoes/aprovacao-massa',
-        data: {
+        {
           'transacoesIds': ids,
           'acao': acao,
         },
