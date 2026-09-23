@@ -18,7 +18,7 @@ class _AprovacoesPendentesScreenState extends ConsumerState<AprovacoesPendentesS
 
   Future<void> _aprovarTudo() async {
     final state = ref.read(aprovacaoFinanceiraProvider);
-    final ids = state.transacoesPendentes.map((t) => t.id).toList();
+    final ids = state.transacoesPendentes.map((t) => t['id'] as String).toList();
     if (ids.isEmpty) return;
 
     final sucesso = await ref.read(aprovacaoFinanceiraProvider.notifier).aprovarTransacoes(ids);
@@ -55,21 +55,22 @@ class _AprovacoesPendentesScreenState extends ConsumerState<AprovacoesPendentesS
                       itemCount: state.transacoesPendentes.length,
                       itemBuilder: (context, index) {
                         final transacao = state.transacoesPendentes[index];
+                        final valor = double.tryParse(transacao['valor'].toString()) ?? 0.0;
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           child: ListTile(
-                            title: Text(transacao.descricao),
-                            subtitle: Text('Valor: R\$ ${transacao.valor.toStringAsFixed(2)}\nTipo: ${transacao.tipo}'),
+                            title: Text(transacao['descricao'] ?? ''),
+                            subtitle: Text('Valor: R\$ ${valor.toStringAsFixed(2)}\nTipo: ${transacao['tipo'] ?? ''}'),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.cancel, color: Colors.red),
-                                  onPressed: () => ref.read(aprovacaoFinanceiraProvider.notifier).rejeitarTransacoes([transacao.id]),
+                                  onPressed: () => ref.read(aprovacaoFinanceiraProvider.notifier).rejeitarTransacoes([transacao['id']]),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.check_circle, color: Colors.green),
-                                  onPressed: () => ref.read(aprovacaoFinanceiraProvider.notifier).aprovarTransacoes([transacao.id]),
+                                  onPressed: () => ref.read(aprovacaoFinanceiraProvider.notifier).aprovarTransacoes([transacao['id']]),
                                 ),
                               ],
                             ),

@@ -1,14 +1,10 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import '../../auth/providers/auth_provider.dart';
-import '../../core/config/env_config.dart';
-import '../models/transacao_financeira.dart';
+import '../../../shared/providers/api_client_provider.dart';
 
 class AprovacaoFinanceiraState {
   final bool isLoading;
   final String? error;
-  final List<TransacaoFinanceira> transacoesPendentes;
+  final List<dynamic> transacoesPendentes;
 
   AprovacaoFinanceiraState({
     this.isLoading = false,
@@ -19,7 +15,7 @@ class AprovacaoFinanceiraState {
   AprovacaoFinanceiraState copyWith({
     bool? isLoading,
     String? error,
-    List<TransacaoFinanceira>? transacoesPendentes,
+    List<dynamic>? transacoesPendentes,
   }) {
     return AprovacaoFinanceiraState(
       isLoading: isLoading ?? this.isLoading,
@@ -43,8 +39,7 @@ class AprovacaoFinanceiraNotifier extends Notifier<AprovacaoFinanceiraState> {
       
       if (response != null && response['data'] != null) {
         final data = response['data'] as List;
-        final list = data.map((e) => TransacaoFinanceira.fromJson(e)).toList();
-        state = state.copyWith(isLoading: false, transacoesPendentes: list);
+        state = state.copyWith(isLoading: false, transacoesPendentes: data);
       } else {
         throw Exception('Formato de resposta inválido');
       }
@@ -76,7 +71,7 @@ class AprovacaoFinanceiraNotifier extends Notifier<AprovacaoFinanceiraState> {
       if (response != null) {
         // Remove as atualizadas da lista local
         final pendentesAtualizadas = state.transacoesPendentes
-            .where((t) => !ids.contains(t.id))
+            .where((t) => !ids.contains(t['id']))
             .toList();
         state = state.copyWith(transacoesPendentes: pendentesAtualizadas);
         return true;
