@@ -493,22 +493,36 @@ class _AuditoriaFinanceiraScreenState extends ConsumerState<AuditoriaFinanceiraS
                           ],
                         ),
                       ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        icon: const Icon(Icons.check, size: 16),
-                        label: const Text('Enquadrar', style: TextStyle(fontSize: 12)),
-                        onPressed: () => _reclassificarRapido(
-                          context,
-                          id,
-                          desc,
-                          sugestaoId,
-                          sugestaoNome,
-                          planoContas,
-                        ),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_note, color: Colors.purple, size: 22),
+                            tooltip: 'Editar Lançamento / Vincular Recebedor',
+                            onPressed: () => TransacaoModal.show(
+                              context,
+                              isReceita: tipo == 'RECEITA',
+                              transacao: t,
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.check, size: 16),
+                            label: const Text('Enquadrar', style: TextStyle(fontSize: 12)),
+                            onPressed: () => _reclassificarRapido(
+                              context,
+                              id,
+                              desc,
+                              sugestaoId,
+                              sugestaoNome,
+                              planoContas,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
