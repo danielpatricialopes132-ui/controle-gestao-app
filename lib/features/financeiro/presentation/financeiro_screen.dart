@@ -405,24 +405,96 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      t['categoriaFk']?['descricao'] ?? t['categoriaFk']?['nome'] ?? 'Sem Categoria',
-                      style: const TextStyle(fontSize: 12),
-                    ),
+                    const SizedBox(height: 4),
+                    // Plano de Contas / Categoria
                     Row(
                       children: [
+                        const Icon(Icons.account_tree_outlined, size: 13, color: Colors.blueGrey),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            t['categoriaFk'] != null
+                                ? '${t['categoriaFk']['codigo'] != null ? '${t['categoriaFk']['codigo']} - ' : ''}${t['categoriaFk']['descricao'] ?? t['categoriaFk']['nome']}'
+                                : 'Sem Plano de Contas',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Badges: Conta Bancária / Caixa + Colaborador / Fornecedor + OFX
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
                         if (t['contaBancaria'] != null)
-                          Text(
-                            '🏦 ${t['contaBancaria']['nome']} ',
-                            style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.blue.shade200, width: 0.8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.account_balance, size: 11, color: Colors.blue.shade800),
+                                const SizedBox(width: 4),
+                                Text(
+                                  t['contaBancaria']['nome'],
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (t['funcionario'] != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.purple.shade200, width: 0.8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.person, size: 11, color: Colors.purple.shade800),
+                                const SizedBox(width: 4),
+                                Text(
+                                  t['funcionario']['nome'] ?? '',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple.shade900),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (t['clienteFornecedor'] != null && (t['clienteFornecedor'] as String).isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.orange.shade200, width: 0.8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.storefront, size: 11, color: Colors.orange.shade800),
+                                const SizedBox(width: 4),
+                                Text(
+                                  t['clienteFornecedor'],
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange.shade900),
+                                ),
+                              ],
+                            ),
                           ),
                         if (t['isConciliada'] == true)
                           Container(
-                            margin: const EdgeInsets.only(left: 4),
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
                             child: const Text('OFX', style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold)),
-                          )
+                          ),
                       ],
                     ),
                   ],

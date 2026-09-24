@@ -650,8 +650,35 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+                    String descricaoFinal = _descricaoController.text.trim();
+
+                    // Se houver colaborador vinculado e o nome não estiver na descrição, enriquecer
+                    if (_funcionarioSelecionadoId != null) {
+                      final asyncFuncs = ref.read(funcionariosProvider);
+                      asyncFuncs.whenData((funcs) {
+                        final f = funcs.firstWhere((x) => x['id'] == _funcionarioSelecionadoId, orElse: () => null);
+                        if (f != null && f['nome'] != null) {
+                          final nome = (f['nome'] as String).trim();
+                          if (!descricaoFinal.toLowerCase().contains(nome.toLowerCase())) {
+                            if (descricaoFinal.isEmpty || descricaoFinal.toLowerCase() == 'salário' || descricaoFinal.toLowerCase() == 'salario' || descricaoFinal.toLowerCase() == 'folha de pagamento') {
+                              descricaoFinal = 'Pagamento Salário - $nome';
+                            } else if (descricaoFinal.toLowerCase().contains('pró-labore') || descricaoFinal.toLowerCase().contains('pro-labore')) {
+                              descricaoFinal = 'Pró-Labore - $nome';
+                            } else {
+                              descricaoFinal = '$descricaoFinal - $nome';
+                            }
+                          }
+                        }
+                      });
+                    } else if (_recebedorManualController.text.trim().isNotEmpty) {
+                      final nomeRecebedor = _recebedorManualController.text.trim();
+                      if (!descricaoFinal.toLowerCase().contains(nomeRecebedor.toLowerCase())) {
+                        descricaoFinal = '$descricaoFinal - $nomeRecebedor';
+                      }
+                    }
+
                     final data = {
-                      'descricao': _descricaoController.text,
+                      'descricao': descricaoFinal,
                       'valor': _valorController.text.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
                       'categoriaId': _isRateio ? null : _categoriaSelecionada,
                       'planoContaId': _isRateio ? null : _categoriaSelecionada,
