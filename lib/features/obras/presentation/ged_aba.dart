@@ -118,7 +118,7 @@ class _GedAbaState extends ConsumerState<GedAba> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: _uploading ? null : _uploadDocumento,
         label: _uploading ? const Text('Enviando...') : const Text('Novo Documento'),
         icon: _uploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.upload_file),

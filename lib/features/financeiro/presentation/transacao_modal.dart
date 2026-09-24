@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/categorias_provider.dart';
 import '../providers/financeiro_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
-
+import '../../obras/providers/obras_provider.dart';
 class TransacaoModal extends ConsumerStatefulWidget {
   final bool isReceita;
   final Map<String, dynamic>? transacaoExistente;
@@ -43,6 +43,9 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
   String? _comprovanteUrl;
   late DateTime _dataVencimento;
 
+  bool _isRateio = false;
+  List<Map<String, dynamic>> _rateios = [];
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +59,17 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
     _contaBancariaSelecionada = t?['contaBancariaId'];
     _comprovanteUrl = t?['comprovanteUrl'];
     _dataVencimento = t?['dataVencimento'] != null ? DateTime.parse(t!['dataVencimento']) : DateTime.now();
+
+    final r = t?['rateios'];
+    if (r != null && r is List && r.isNotEmpty) {
+      _isRateio = true;
+      _rateios = List<Map<String, dynamic>>.from(r.map((x) => {
+        'obraId': x['obraId'],
+        'categoriaId': x['categoriaId'],
+        'valor': x['valor'].toString(),
+        'percentual': x['percentual']?.toString(),
+      }));
+    }
   }
 
   @override
@@ -147,57 +161,197 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
               controller: _valorController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
-                labelText: 'Valor (R\$)',
+                labelText: 'Valor Total (R\$)',
                 border: OutlineInputBorder(),
               ),
               validator: (val) => (val == null || val.isEmpty) ? 'Obrigatório' : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _codigoBarrasController,
-              decoration: const InputDecoration(
-                labelText: 'Código de Barras / Pix (Opcional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _observacaoController,
-              decoration: const InputDecoration(
-                labelText: 'Observação / Histórico (Opcional)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            asyncCategorias.when(
-              data: (categorias) {
-                final categoriasFiltradas = categorias.where((c) => c['tipo'] == (widget.isReceita ? 'RECEITA' : 'DESPESA')).toList();
-                
-                // Garantir que a categoria selecionada existe na lista filtrada (pode ocorrer problema se a categoria do backend não bater)
-                if (_categoriaSelecionada != null && !categoriasFiltradas.any((c) => c['id'] == _categoriaSelecionada)) {
-                  _categoriaSelecionada = null; // reseta se não existir
-                }
-
-                return DropdownButtonFormField<String>(
-                  value: _categoriaSelecionada,
-                  decoration: const InputDecoration(
-                    labelText: 'Plano de Contas',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: categoriasFiltradas.map((c) => DropdownMenuItem<String>(
-                    value: c['id'],
-                    child: Text('${c['codigo']} - ${c['descricao']}'),
-                  )).toList(),
-                  onChanged: (val) {
-                    setState(() => _categoriaSelecionada = val);
-                  },
-                  validator: (val) => val == null ? 'Selecione uma categoria' : null,
-                );
+            
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Ratear em múltiplos centros de custo?', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Dividir esta despesa entre várias obras/categorias'),
+              value: _isRateio,
+              activeColor: color,
+              onChanged: (val) {
+                setState(() {
+                  _isRateio = val;
+                  if (val && _rateios.isEmpty) {
+                    _rateios.add({'valor': ''});
+                  }
+                });
               },
-              loading: () => const CircularProgressIndicator(),
-              error: (e, st) => const Text('Erro ao carregar plano de contas'),
             ),
+            const SizedBox(height: 16),
+
+            if (!_isRateio) ...[
+              asyncCategorias.when(
+                data: (categorias) {
+                  final categoriasFiltradas = categorias.where((c) => c['tipo'] == (widget.isReceita ? 'RECEITA' : 'DESPESA')).toList();
+                  
+                  if (_categoriaSelecionada != null && !categoriasFiltradas.any((c) => c['id'] == _categoriaSelecionada)) {
+                    _categoriaSelecionada = null;
+                  }
+
+                  return Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: _categoriaSelecionada,
+                        decoration: const InputDecoration(
+                          labelText: 'Plano de Contas',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: categoriasFiltradas.map((c) => DropdownMenuItem<String>(
+                          value: c['id'],
+                          child: Text('${c['codigo']} - ${c['descricao']}'),
+                        )).toList(),
+                        onChanged: (val) {
+                          setState(() => _categoriaSelecionada = val);
+                        },
+                        validator: (val) => val == null ? 'Selecione uma categoria' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final asyncObras = ref.watch(obrasProvider);
+                          return asyncObras.when(
+                            data: (obras) {
+                              if (_obraSelecionada != null && !obras.any((o) => o['id'] == _obraSelecionada)) {
+                                _obraSelecionada = null;
+                              }
+                              return DropdownButtonFormField<String>(
+                                value: _obraSelecionada,
+                                decoration: const InputDecoration(
+                                  labelText: 'Obra (Opcional)',
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('Geral (Sem Obra)'),
+                                  ),
+                                  ...obras.map((o) => DropdownMenuItem<String>(
+                                    value: o['id'],
+                                    child: Text(o['nome']),
+                                  )),
+                                ],
+                                onChanged: (val) {
+                                  setState(() => _obraSelecionada = val);
+                                },
+                              );
+                            },
+                            loading: () => const CircularProgressIndicator(),
+                            error: (e, st) => const Text('Erro ao carregar obras'),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (e, st) => const Text('Erro ao carregar plano de contas'),
+              ),
+            ] else ...[
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    ..._rateios.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final rateio = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                initialValue: rateio['valor'],
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  labelText: 'Valor',
+                                  isDense: true,
+                                ),
+                                onChanged: (val) => rateio['valor'] = val,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Consumer(
+                                builder: (context, ref, child) {
+                                  final asyncObras = ref.watch(obrasProvider);
+                                  return asyncObras.when(
+                                    data: (obras) {
+                                      return DropdownButtonFormField<String>(
+                                        value: rateio['obraId'],
+                                        decoration: const InputDecoration(labelText: 'Obra', isDense: true),
+                                        items: [
+                                          const DropdownMenuItem<String>(value: null, child: Text('Sem Obra', overflow: TextOverflow.ellipsis)),
+                                          ...obras.map((o) => DropdownMenuItem<String>(
+                                            value: o['id'],
+                                            child: Text(o['nome'], overflow: TextOverflow.ellipsis),
+                                          )),
+                                        ],
+                                        onChanged: (val) => setState(() => rateio['obraId'] = val),
+                                      );
+                                    },
+                                    loading: () => const SizedBox(),
+                                    error: (e, st) => const SizedBox(),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 3,
+                              child: asyncCategorias.when(
+                                data: (categorias) {
+                                  final categoriasFiltradas = categorias.where((c) => c['tipo'] == (widget.isReceita ? 'RECEITA' : 'DESPESA')).toList();
+                                  return DropdownButtonFormField<String>(
+                                    value: rateio['categoriaId'],
+                                    decoration: InputDecoration(labelText: 'Categoria', isDense: true),
+                                    items: categoriasFiltradas.map((c) => DropdownMenuItem<String>(
+                                      value: c['id'],
+                                      child: Text(c['descricao'], overflow: TextOverflow.ellipsis),
+                                    )).toList(),
+                                    onChanged: (val) => setState(() => rateio['categoriaId'] = val),
+                                  );
+                                },
+                                loading: () => const CircularProgressIndicator(),
+                                error: (e, st) => const Text('Erro'),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                setState(() {
+                                  _rateios.removeAt(idx);
+                                });
+                              },
+                            )
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _rateios.add({'valor': ''});
+                        });
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Adicionar Fração do Rateio'),
+                    )
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 16),
             Consumer(
               builder: (context, ref, child) {
@@ -229,7 +383,6 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
               },
             ),
             const SizedBox(height: 16),
-            // Data
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Data de Vencimento/Pagamento'),
@@ -247,16 +400,6 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                 }
               },
             ),
-            if (_comprovanteUrl != null) ...[
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.attachment, color: Colors.blue),
-                title: const Text('Comprovante Anexado', style: TextStyle(color: Colors.blue)),
-                onTap: () {
-                  // Aqui futuramente podemos abrir a URL no navegador ou Modal
-                },
-              ),
-            ],
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () async {
@@ -264,16 +407,14 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                   final data = {
                     'descricao': _descricaoController.text,
                     'valor': _valorController.text.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
-                    'categoriaId': _categoriaSelecionada,
-                    'planoContaId': _categoriaSelecionada,
-                    'obraId': _obraSelecionada,
+                    'categoriaId': _isRateio ? null : _categoriaSelecionada,
+                    'planoContaId': _isRateio ? null : _categoriaSelecionada,
+                    'obraId': _isRateio ? null : _obraSelecionada,
                     'contaBancariaId': _contaBancariaSelecionada,
                     'dataVencimento': _dataVencimento.toIso8601String(),
                     'tipo': widget.isReceita ? 'RECEITA' : 'DESPESA',
                     'status': widget.transacaoExistente?['status'] ?? 'PENDENTE',
-                    'codigoBarras': _codigoBarrasController.text.isNotEmpty ? _codigoBarrasController.text : null,
-                    'observacao': _observacaoController.text.isNotEmpty ? _observacaoController.text : null,
-                    'comprovanteUrl': _comprovanteUrl,
+                    'rateios': _isRateio ? _rateios : [],
                   };
 
                   try {

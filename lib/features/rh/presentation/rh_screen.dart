@@ -81,7 +81,7 @@ class _RHScreenState extends ConsumerState<RHScreen> with SingleTickerProviderSt
           const FolhaPagamentoTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () => FuncionarioModal.show(context),
         icon: const Icon(Icons.person_add),
         label: const Text('Novo Funcionário'),

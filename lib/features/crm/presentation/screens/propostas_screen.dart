@@ -148,7 +148,7 @@ class _PropostasScreenState extends ConsumerState<PropostasScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(heroTag: null, 
         onPressed: () {
           Navigator.push(
             context,

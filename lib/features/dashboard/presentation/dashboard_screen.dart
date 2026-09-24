@@ -318,6 +318,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Navigator.pop(context);
           },
         ),
+      if (hasRole(['ENGENHARIA']))
+        ListTile(
+          leading: const Icon(Icons.fact_check),
+          title: const Text('FVS com IA'),
+          onTap: () {
+            Navigator.pop(context);
+            context.push('/fvs');
+          },
+        ),
       if (hasRole(['FINANCEIRO']))
         ListTile(
           leading: const Icon(Icons.account_balance_wallet),

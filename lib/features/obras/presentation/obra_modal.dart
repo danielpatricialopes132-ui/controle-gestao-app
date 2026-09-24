@@ -1,12 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/obras_provider.dart';
 
-class ObraModal extends StatefulWidget {
-  const ObraModal({super.key});
+class ObraModal extends ConsumerStatefulWidget {
+  final Map<String, dynamic>? obra;
+
+  const ObraModal({super.key, this.obra});
 
   @override
-  State<ObraModal> createState() => _ObraModalState();
+  ConsumerState<ObraModal> createState() => _ObraModalState();
 
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {Map<String, dynamic>? obra}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -17,17 +21,27 @@ class ObraModal extends StatefulWidget {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: const ObraModal(),
+        child: ObraModal(obra: obra),
       ),
     );
   }
 }
 
-class _ObraModalState extends State<ObraModal> {
+class _ObraModalState extends ConsumerState<ObraModal> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _enderecoController = TextEditingController();
   String _status = 'EM_ANDAMENTO';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.obra != null) {
+      _nomeController.text = widget.obra!['nome'] ?? '';
+      _enderecoController.text = widget.obra!['endereco'] ?? '';
+      _status = widget.obra!['status'] ?? 'EM_ANDAMENTO';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +53,9 @@ class _ObraModalState extends State<ObraModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Nova Obra',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              widget.obra == null ? 'Nova Obra' : 'Editar Obra',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -78,13 +92,34 @@ class _ObraModalState extends State<ObraModal> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  // TODO: Enviar para API via Riverpod
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Obra cadastrada com sucesso!')),
-                  );
+                  final payload = {
+                    'nome': _nomeController.text,
+                    'endereco': _enderecoController.text,
+                    'status': _status,
+                  };
+
+                  try {
+                    if (widget.obra == null) {
+                      await ref.read(obrasControllerProvider.notifier).addObra(payload);
+                    } else {
+                      await ref.read(obrasControllerProvider.notifier).updateObra(widget.obra!['id'], payload);
+                    }
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(widget.obra == null ? 'Obra cadastrada com sucesso!' : 'Obra atualizada com sucesso!')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erro ao salvar obra: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

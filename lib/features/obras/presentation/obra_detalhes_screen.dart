@@ -175,7 +175,7 @@ class _ObraDetalhesScreenState extends ConsumerState<ObraDetalhesScreen> with Si
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () => AdendoModal.show(context, widget.obraId),
         icon: const Icon(Icons.add),
         label: const Text('Novo Aditivo'),

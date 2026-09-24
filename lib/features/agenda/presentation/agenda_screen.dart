@@ -66,7 +66,7 @@ class AgendaScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () => ContatoModal.show(context),
         icon: const Icon(Icons.person_add),
         label: const Text('Novo Contato'),

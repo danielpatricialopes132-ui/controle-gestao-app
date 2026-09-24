@@ -89,7 +89,7 @@ class _OrdensCompraScreenState extends ConsumerState<OrdensCompraScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(heroTag: null, 
         onPressed: () {
           // TODO: Tela complexa de criação de OC com seleção de múltiplos produtos
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nova OC em desenvolvimento')));

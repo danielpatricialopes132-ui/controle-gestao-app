@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,12 +18,17 @@ class _BimViewerAbaState extends State<BimViewerAba> {
   @override
   void initState() {
     super.initState();
-    // A URL será apontada para o backend público rodando o HTML do ifc.js
-    // Idealmente deve ser a URL do servidor de produção ou ngrok local
-    final String viewerUrl = 'http://10.0.2.2:3000/bim-viewer.html';
+    // A URL serÃ¡ apontada para o backend pÃºblico rodando o HTML do ifc.js
+    // Idealmente deve ser a URL do servidor de produÃ§Ã£o ou ngrok local
+    final String viewerUrl = 'http://localhost:3000/bim-viewer.html';
 
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+    _controller = WebViewController();
+    
+    if (!kIsWeb) {
+      _controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    }
+    
+    _controller
       ..setBackgroundColor(const Color(0x00000000))
       ..loadRequest(Uri.parse(viewerUrl));
   }
@@ -32,7 +38,7 @@ class _BimViewerAbaState extends State<BimViewerAba> {
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o link do IFC Builder')),
+          const SnackBar(content: Text('NÃ£o foi possÃ­vel abrir o link do IFC Builder')),
         );
       }
     }
@@ -73,4 +79,6 @@ class _BimViewerAbaState extends State<BimViewerAba> {
     );
   }
 }
+
+
 

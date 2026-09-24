@@ -127,7 +127,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(heroTag: null, 
         onPressed: _showAddClienteModal,
         tooltip: 'Adicionar Cliente',
         child: const Icon(Icons.add),

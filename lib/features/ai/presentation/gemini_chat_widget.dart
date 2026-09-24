@@ -13,7 +13,7 @@ class GeminiChatWidget extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return FloatingActionButton(
+    return FloatingActionButton(heroTag: null, 
       onPressed: () {
         showDialog(
           context: context,

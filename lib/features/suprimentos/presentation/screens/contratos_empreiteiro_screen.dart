@@ -78,7 +78,7 @@ class _ContratosEmpreiteiroScreenState extends ConsumerState<ContratosEmpreiteir
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () => _showNovoContratoModal(context),
         icon: const Icon(Icons.add),
         label: const Text('Novo Contrato'),

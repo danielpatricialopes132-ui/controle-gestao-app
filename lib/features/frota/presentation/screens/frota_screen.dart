@@ -72,7 +72,7 @@ class _FrotaScreenState extends ConsumerState<FrotaScreen> with SingleTickerProv
           _buildManutencoesTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () {
           if (_tabController.index == 0) {
             EquipamentoModal.show(context);

@@ -310,7 +310,7 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(heroTag: null, 
         onPressed: _showAddFornecedorModal,
         tooltip: 'Adicionar Fornecedor',
         backgroundColor: Colors.orange.shade800,

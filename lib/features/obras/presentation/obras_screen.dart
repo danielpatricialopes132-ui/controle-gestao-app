@@ -39,13 +39,55 @@ class ObrasScreen extends ConsumerWidget {
                   ),
                   title: Text(obra['nome'] ?? 'Sem Nome', style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(obra['endereco'] ?? 'Sem Endereço'),
-                  trailing: Chip(
-                    label: Text(
-                      obra['status'] ?? '', 
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                    backgroundColor: _getStatusColor(obra['status']),
-                    side: BorderSide.none,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Chip(
+                        label: Text(
+                          obra['status'] ?? '', 
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                        backgroundColor: _getStatusColor(obra['status']),
+                        side: BorderSide.none,
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                        onPressed: () {
+                          ObraModal.show(context, obra: obra);
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Excluir Obra'),
+                              content: Text('Tem certeza que deseja excluir a obra ${obra['nome']}?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Cancelar'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    ref.read(obrasControllerProvider.notifier).deleteObra(obra['id']);
+                                    Navigator.pop(ctx);
+                                  },
+                                  child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                   onTap: () {
                     Navigator.push(
@@ -64,7 +106,7 @@ class ObrasScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () {
           ObraModal.show(context);
         },

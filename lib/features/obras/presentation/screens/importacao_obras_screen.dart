@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -180,6 +180,16 @@ class _ImportacaoObrasScreenState extends ConsumerState<ImportacaoObrasScreen> {
                                               padding: EdgeInsets.symmetric(horizontal: 4),
                                             ),
                                           )
+                                        else if (row['obraId'] != null)
+                                          const Padding(
+                                            padding: EdgeInsets.only(left: 8.0),
+                                            child: Chip(
+                                              label: Text('INCLUIR DADOS NELA (ATUALIZAR)', style: TextStyle(fontSize: 10, color: Colors.black87)),
+                                              backgroundColor: Colors.amberAccent,
+                                              labelPadding: EdgeInsets.zero,
+                                              padding: EdgeInsets.symmetric(horizontal: 4),
+                                            ),
+                                          )
                                       ],
                                     ),
                                   ),
@@ -239,3 +249,5 @@ class _ImportacaoObrasScreenState extends ConsumerState<ImportacaoObrasScreen> {
     );
   }
 }
+
+

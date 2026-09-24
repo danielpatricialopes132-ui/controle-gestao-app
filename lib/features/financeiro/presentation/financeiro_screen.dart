@@ -20,6 +20,7 @@ import 'screens/ofx_import_screen.dart';
 import 'screens/previsao_ia_screen.dart';
 import 'screens/importacao_csv_screen.dart';
 import 'screens/aprovacoes_pendentes_screen.dart';
+import 'screens/auditoria_financeira_screen.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
@@ -108,6 +109,12 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             tooltip: 'Previsão de Caixa (IA)',
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrevisaoIaScreen())),
           ),
+          if (ref.watch(appUserProvider)?['role'] == 'MASTER')
+            IconButton(
+              icon: const Icon(Icons.security, color: Colors.amber),
+              tooltip: 'Auditoria Inteligente (MASTER)',
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuditoriaFinanceiraScreen())),
+            ),
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Configuração Contábil',
@@ -129,8 +136,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
           _buildValesTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'addBtn',
+      floatingActionButton: FloatingActionButton.extended(heroTag: 'addBtn',
         onPressed: () {
           if (_tabController.index == 0) {
             showModalBottomSheet(
@@ -633,3 +639,4 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
     );
   }
 }
+

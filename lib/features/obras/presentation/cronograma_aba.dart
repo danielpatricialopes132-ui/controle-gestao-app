@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/obra_ged_provider.dart';
+import 'screens/cronograma_gantt_screen.dart';
 
 class CronogramaAba extends ConsumerStatefulWidget {
   final String obraId;
@@ -81,7 +82,30 @@ class _CronogramaAbaState extends ConsumerState<CronogramaAba> {
             return const Center(child: Text('Nenhuma etapa do cronograma cadastrada.'));
           }
 
-          return ListView.builder(
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CronogramaGanttScreen(obraId: widget.obraId),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.bar_chart),
+                  label: const Text('Ver Gantt e Curva S (Avanço Físico-Financeiro)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
             itemCount: etapas.length,
             padding: const EdgeInsets.all(16),
             itemBuilder: (ctx, i) {
@@ -128,10 +152,13 @@ class _CronogramaAbaState extends ConsumerState<CronogramaAba> {
                 ),
               );
             },
-          );
+          ),
+          ), // End of Expanded
+          ] // End of Column children
+          ); // End of Column
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: _mostrarModalNovaEtapa,
         label: const Text('Nova Etapa'),
         icon: const Icon(Icons.add_task),
@@ -245,3 +272,4 @@ class _NovaEtapaModalState extends ConsumerState<_NovaEtapaModal> {
     );
   }
 }
+

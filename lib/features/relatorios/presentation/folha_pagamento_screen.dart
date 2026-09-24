@@ -158,7 +158,7 @@ class _FolhaPagamentoScreenState extends ConsumerState<FolhaPagamentoScreen> {
         ],
       ),
       floatingActionButton: _funcionarios.any((f) => (f['saldo'] ?? 0) > 0)
-        ? FloatingActionButton.extended(
+        ? FloatingActionButton.extended(heroTag: null, 
             onPressed: _isPaying ? null : _pagarSaldoRestante,
             icon: _isPaying ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.payment),
             label: Text(_isPaying ? 'Processando...' : 'Pagar Saldo Restante'),

@@ -19,10 +19,30 @@ final contasBancariasProvider = FutureProvider<List<dynamic>>((ref) async {
   return response as List<dynamic>;
 });
 
+final auditoriaFinanceiraProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/financeiro/auditoria');
+  return response as Map<String, dynamic>;
+});
+
 class FinanceiroController extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() {
     return const AsyncData(null);
+  }
+
+  Future<void> excluirTransacao(String transacaoId) async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.delete('/financeiro/transacoes/$transacaoId');
+      state = const AsyncData(null);
+      ref.invalidate(transacoesProvider);
+      ref.invalidate(auditoriaFinanceiraProvider);
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> scanConta(String base64, String mimeType) async {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/gerenciamento_terceiros_provider.dart';
@@ -8,6 +8,7 @@ import 'widgets/terceiros/mapa_visitas_semanal_card.dart';
 import 'widgets/terceiros/terceiros_estagios_view.dart';
 import 'widgets/terceiros/portaria_retiradas_view.dart';
 import 'widgets/terceiros/punch_list_recebimento_view.dart';
+import 'widgets/terceiros/agente_whatsapp_modal.dart';
 
 class GerenciamentoTerceirosAba extends ConsumerStatefulWidget {
   final String obraId;
@@ -109,6 +110,13 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
                   icon: const Icon(Icons.add),
                   label: const Text('Novo Parceiro'),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade800, foregroundColor: Colors.white),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () => AgenteWhatsappModal.show(context),
+                  icon: const Icon(Icons.smart_toy),
+                  label: const Text('Agente IA (WhatsApp)'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
                 ),
               ] else if (_modo == 1) ...[
                 ElevatedButton.icon(
@@ -937,3 +945,4 @@ class _GerenciamentoTerceirosAbaState extends ConsumerState<GerenciamentoTerceir
     );
   }
 }
+

@@ -17,7 +17,9 @@ class _PrevisaoIaScreenState extends ConsumerState<PrevisaoIaScreen> {
   @override
   void initState() {
     super.initState();
-    _gerarPrevisao();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _gerarPrevisao();
+    });
   }
 
   Future<void> _gerarPrevisao() async {

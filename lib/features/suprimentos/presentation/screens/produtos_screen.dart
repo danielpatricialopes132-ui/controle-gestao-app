@@ -114,7 +114,7 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(heroTag: null, 
         onPressed: _showAddProdutoModal,
         tooltip: 'Adicionar Produto',
         child: const Icon(Icons.add),

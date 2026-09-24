@@ -52,7 +52,7 @@ class _RhDashboardScreenState extends ConsumerState<RhDashboardScreen> with Sing
           _buildValesTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null, 
         onPressed: () {
           if (_tabController.index == 0) {
             FuncionarioModal.show(context);

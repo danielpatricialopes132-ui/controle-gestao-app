@@ -8,7 +8,7 @@ import '../../features/relatorios/presentation/relatorios_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/financeiro/presentation/calculadora/calculadora_financeira_screen.dart';
 import '../../features/portal_cliente/presentation/screens/portal_cliente_screen.dart';
-
+import '../../features/obras/presentation/screens/fvs_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
@@ -39,6 +39,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/portal-cliente',
       builder: (context, state) => const PortalClienteScreen(),
+    ),
+    GoRoute(
+      path: '/fvs',
+      builder: (context, state) => const FvsScreen(),
     ),
   ],
 );

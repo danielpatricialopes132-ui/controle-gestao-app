@@ -13,7 +13,7 @@ class Vistoria360Aba extends StatefulWidget {
 class _Vistoria360AbaState extends State<Vistoria360Aba> {
   // Para fins de demonstração na Fase 8, carregamos uma imagem 360 estática.
   // Pode ser substituída pela API que lista vistorias e uma imagem real (Ex: Ricoh Theta).
-  final String demo360Image = 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Equirectangular_projection_SW.jpg'; 
+  final String demo360Image = 'https://upload.wikimedia.org/wikipedia/commons/8/89/360_Degrees_view_of_Machu_Picchu_-_Peru.jpg'; 
 
   @override
   Widget build(BuildContext context) {
@@ -59,3 +59,4 @@ class _Vistoria360AbaState extends State<Vistoria360Aba> {
     );
   }
 }
+
