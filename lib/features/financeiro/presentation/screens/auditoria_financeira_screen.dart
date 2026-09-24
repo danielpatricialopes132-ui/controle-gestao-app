@@ -60,28 +60,30 @@ class _AuditoriaFinanceiraScreenState extends ConsumerState<AuditoriaFinanceiraS
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () async {
+            onPressed: () {
               Navigator.of(ctx).pop();
-              try {
-                await ref.read(financeiroControllerProvider.notifier).excluirTransacao(transacaoId);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Transação excluída com sucesso!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+              Future.microtask(() async {
+                try {
+                  await ref.read(financeiroControllerProvider.notifier).excluirTransacao(transacaoId);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Transação excluída com sucesso!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao excluir: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erro ao excluir: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
+              });
             },
             child: const Text('Excluir'),
           ),
@@ -177,31 +179,33 @@ class _AuditoriaFinanceiraScreenState extends ConsumerState<AuditoriaFinanceiraS
                 label: const Text('Confirmar Enquadramento'),
                 onPressed: categoriaSelecionada == null
                     ? null
-                    : () async {
+                    : () {
                         Navigator.of(ctx).pop();
-                        try {
-                          await ref.read(financeiroControllerProvider.notifier).reclassificarTransacao(
-                                transacaoId,
-                                categoriaSelecionada!,
+                        Future.microtask(() async {
+                          try {
+                            await ref.read(financeiroControllerProvider.notifier).reclassificarTransacao(
+                                  transacaoId,
+                                  categoriaSelecionada!,
+                                );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Transação reenquadrada no plano de contas com sucesso!'),
+                                  backgroundColor: Colors.green,
+                                ),
                               );
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Transação reenquadrada no plano de contas com sucesso!'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro ao reenquadrar: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
                           }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Erro ao reenquadrar: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
+                        });
                       },
               ),
             ],
