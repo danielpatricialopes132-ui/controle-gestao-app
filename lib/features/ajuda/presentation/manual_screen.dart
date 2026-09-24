@@ -192,6 +192,17 @@ class ManualScreen extends ConsumerWidget {
               '- Notificações Automáticas via WhatsApp: Disparo com 1 clique de liberações de portaria e termos de cautela/retirada de peças para marmorarias e marcenarias com mensagens personalizadas.\n'
               '- Comparador Antes & Depois Interativo: Ferramenta visual com cortina slider para inspecionar a evolução dos ambientes antes e depois da montagem para anexo na Revista de Obra.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.psychology,
+              title: '13. Super Auditor Contábil & Financeiro (Exclusivo MASTER)',
+              content: 'Controladoria de alta precisão e conformidade contábil automatizada:\n'
+              '- Score de Saúde Contábil (0 a 100%): Indicador em tempo real da qualidade dos lançamentos financeiros e da conformidade da DRE.\n'
+              '- Enquadramento Inteligente no Plano de Contas: Detecção de anomalias (despesas de obras alocadas como administrativas, insumos de canteiro sem categoria ou categorias genéricas "Outros/Diversos") com recomendação automática e reclassificação em 1 clique.\n'
+              '- Rastreamento de Duplicidades: Identifica pagamentos e repetições suspeitas de mesmo valor em intervalos curtos com opção de exclusão imediata.\n'
+              '- Compliance Fiscal: Monitoramento de pagamentos efetuados sem recibo ou comprovante anexado.',
+            ),
           ],
         ),
       ),
