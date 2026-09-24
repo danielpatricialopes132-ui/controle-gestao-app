@@ -21,12 +21,32 @@ subprojects {
 }
 
 subprojects {
-    tasks.whenTaskAdded {
-        if (name.contains("checkAarMetadata", ignoreCase = true) || name.contains("checkReleaseAarMetadata", ignoreCase = true)) {
-            enabled = false
+    val configureAndroid = {
+        val androidExt = project.extensions.findByName("android")
+        if (androidExt != null) {
+            try {
+                val compileSdkMethod = androidExt.javaClass.getMethod("setCompileSdkVersion", Int::class.javaPrimitiveType)
+                compileSdkMethod.invoke(androidExt, 36)
+            } catch (e: Exception) {
+                try {
+                    val compileSdkProp = androidExt.javaClass.getMethod("compileSdk", Int::class.javaPrimitiveType)
+                    compileSdkProp.invoke(androidExt, 36)
+                } catch (e2: Exception) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    if (state.executed) {
+        configureAndroid()
+    } else {
+        afterEvaluate {
+            configureAndroid()
         }
     }
 }
+
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
