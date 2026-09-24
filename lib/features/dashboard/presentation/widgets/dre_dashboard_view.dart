@@ -15,6 +15,13 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
   String _filtroAtual = 'ano'; // 'mes', 'trimestre', 'ano'
   final _formatCurrency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
+  double _parseNum(dynamic val) {
+    if (val == null) return 0.0;
+    if (val is num) return val.toDouble();
+    if (val is String) return double.tryParse(val) ?? 0.0;
+    return 0.0;
+  }
+
   Map<String, String> _getParams() {
     final hoje = DateTime.now();
     DateTime inicio;
@@ -130,7 +137,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
           Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
           Text(
-            _formatCurrency.format((value ?? 0).toDouble()),
+            _formatCurrency.format(_parseNum(value)),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
           ),
         ],
@@ -139,8 +146,8 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
   }
 
   Widget _buildMarginCard(Map<String, dynamic> ind) {
-    double margemBruta = (ind['margemBruta'] ?? 0).toDouble();
-    double margemLiquida = (ind['margemLiquida'] ?? 0).toDouble();
+    double margemBruta = _parseNum(ind['margemBruta']);
+    double margemLiquida = _parseNum(ind['margemLiquida']);
 
     return Card(
       elevation: 2,
@@ -165,6 +172,12 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
   }
 
   Widget _buildWaterfallChart(Map<String, dynamic> ind) {
+    final recBruta = _parseNum(ind['receitaBruta']);
+    final custos = _parseNum(ind['custosDiretos']);
+    final lucroBruto = _parseNum(ind['lucroBruto']);
+    final despesas = _parseNum(ind['despesasOperacionais']);
+    final lucroLiq = _parseNum(ind['lucroLiquido']);
+
     // Um gráfico de barras simples simulando o DRE (Cascata)
     return Card(
       elevation: 2,
@@ -179,7 +192,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  maxY: (ind['receitaBruta'] ?? 0).toDouble() * 1.2,
+                  maxY: (recBruta > 0 ? recBruta : 1000) * 1.2,
                   barTouchData: BarTouchData(enabled: false),
                   titlesData: FlTitlesData(
                     show: true,
@@ -208,15 +221,15 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: ((ind['receitaBruta'] ?? 1000) / 4).toDouble(),
+                    horizontalInterval: ((recBruta > 0 ? recBruta : 1000) / 4),
                   ),
                   borderData: FlBorderData(show: false),
                   barGroups: [
-                    _makeGroupData(0, (ind['receitaBruta'] ?? 0).toDouble(), Colors.blue),
-                    _makeGroupData(1, (ind['custosDiretos'] ?? 0).toDouble(), Colors.red),
-                    _makeGroupData(2, (ind['lucroBruto'] ?? 0).toDouble(), Colors.orange),
-                    _makeGroupData(3, (ind['despesasOperacionais'] ?? 0).toDouble(), Colors.redAccent),
-                    _makeGroupData(4, (ind['lucroLiquido'] ?? 0).toDouble(), (ind['lucroLiquido'] ?? 0) >= 0 ? Colors.teal : Colors.red),
+                    _makeGroupData(0, recBruta, Colors.blue),
+                    _makeGroupData(1, custos, Colors.red),
+                    _makeGroupData(2, lucroBruto, Colors.orange),
+                    _makeGroupData(3, despesas, Colors.redAccent),
+                    _makeGroupData(4, lucroLiq, lucroLiq >= 0 ? Colors.teal : Colors.red),
                   ],
                 ),
               ),

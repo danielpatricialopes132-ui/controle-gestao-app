@@ -21,7 +21,7 @@ final contasBancariasProvider = FutureProvider<List<dynamic>>((ref) async {
 
 final auditoriaFinanceiraProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/financeiro/auditoria');
+  final response = await api.get('/financeiro/super-auditor');
   return response as Map<String, dynamic>;
 });
 
@@ -29,6 +29,25 @@ class FinanceiroController extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() {
     return const AsyncData(null);
+  }
+
+  Future<void> reclassificarTransacao(String transacaoId, String categoriaId, {String? obraId}) async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.post('/financeiro/super-auditor', {
+        'acao': 'RECLASSIFICAR',
+        'transacaoId': transacaoId,
+        'categoriaId': categoriaId,
+        'obraId': obraId,
+      });
+      state = const AsyncData(null);
+      ref.invalidate(transacoesProvider);
+      ref.invalidate(auditoriaFinanceiraProvider);
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
   }
 
   Future<void> excluirTransacao(String transacaoId) async {
