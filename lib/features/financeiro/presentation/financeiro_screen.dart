@@ -514,6 +514,63 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                       ),
                     ),
                     const SizedBox(width: 8),
+                    // Badge interativo PAGO / PENDENTE
+                    InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () async {
+                        final novoStatus = t['status'] == 'PAGO' ? 'PENDENTE' : 'PAGO';
+                        try {
+                          await ref.read(financeiroControllerProvider.notifier).updateTransacao(t['id'], {
+                            'status': novoStatus,
+                          });
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Transação marcada como $novoStatus!'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Erro ao alterar status: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (t['status'] == 'PAGO') ? Colors.green.shade50 : Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: (t['status'] == 'PAGO') ? Colors.green.shade400 : Colors.amber.shade600,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              (t['status'] == 'PAGO') ? Icons.check_circle : Icons.schedule,
+                              size: 13,
+                              color: (t['status'] == 'PAGO') ? Colors.green.shade700 : Colors.amber.shade900,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              t['status'] ?? 'PENDENTE',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: (t['status'] == 'PAGO') ? Colors.green.shade800 : Colors.amber.shade900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
                       padding: EdgeInsets.zero,
