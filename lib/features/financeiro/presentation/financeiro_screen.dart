@@ -489,6 +489,26 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                               ],
                             ),
                           ),
+                        if (t['obra'] != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.teal.shade200, width: 0.8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.apartment, size: 11, color: Colors.teal.shade800),
+                                const SizedBox(width: 4),
+                                Text(
+                                  t['obra']['nome'] ?? '',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+                                ),
+                              ],
+                            ),
+                          ),
                         if (t['isConciliada'] == true)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -514,11 +534,10 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Badge interativo PAGO / PENDENTE
-                    InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () async {
-                        final novoStatus = t['status'] == 'PAGO' ? 'PENDENTE' : 'PAGO';
+                    // Badge interativo PAGO / PENDENTE / A CONFIRMAR
+                    PopupMenuButton<String>(
+                      tooltip: 'Alterar Status',
+                      onSelected: (novoStatus) async {
                         try {
                           await ref.read(financeiroControllerProvider.notifier).updateTransacao(t['id'], {
                             'status': novoStatus,
@@ -526,7 +545,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Transação marcada como $novoStatus!'),
+                                content: Text('Transação marcada como ${novoStatus == 'A_CONFIRMAR' ? 'A CONFIRMAR' : novoStatus}!'),
                                 duration: const Duration(seconds: 2),
                               ),
                             );
@@ -539,13 +558,53 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                           }
                         }
                       },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'PAGO',
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green, size: 16),
+                              SizedBox(width: 8),
+                              Text('PAGO', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'PENDENTE',
+                          child: Row(
+                            children: [
+                              Icon(Icons.schedule, color: Colors.amber, size: 16),
+                              SizedBox(width: 8),
+                              Text('PENDENTE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'A_CONFIRMAR',
+                          child: Row(
+                            children: [
+                              Icon(Icons.help_outline, color: Colors.deepPurple, size: 16),
+                              SizedBox(width: 8),
+                              Text('A CONFIRMAR', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                            ],
+                          ),
+                        ),
+                      ],
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: (t['status'] == 'PAGO') ? Colors.green.shade50 : Colors.amber.shade50,
+                          color: (t['status'] == 'PAGO')
+                              ? Colors.green.shade50
+                              : (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                  ? Colors.deepPurple.shade50
+                                  : Colors.amber.shade50,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: (t['status'] == 'PAGO') ? Colors.green.shade400 : Colors.amber.shade600,
+                            color: (t['status'] == 'PAGO')
+                                ? Colors.green.shade400
+                                : (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                    ? Colors.deepPurple.shade400
+                                    : Colors.amber.shade600,
                             width: 1,
                           ),
                         ),
@@ -553,18 +612,42 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              (t['status'] == 'PAGO') ? Icons.check_circle : Icons.schedule,
+                              (t['status'] == 'PAGO')
+                                  ? Icons.check_circle
+                                  : (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                      ? Icons.help_outline
+                                      : Icons.schedule,
                               size: 13,
-                              color: (t['status'] == 'PAGO') ? Colors.green.shade700 : Colors.amber.shade900,
+                              color: (t['status'] == 'PAGO')
+                                  ? Colors.green.shade700
+                                  : (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                      ? Colors.deepPurple.shade700
+                                      : Colors.amber.shade900,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              t['status'] ?? 'PENDENTE',
+                              (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                  ? 'A CONFIRMAR'
+                                  : (t['status'] ?? 'PENDENTE'),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: (t['status'] == 'PAGO') ? Colors.green.shade800 : Colors.amber.shade900,
+                                color: (t['status'] == 'PAGO')
+                                    ? Colors.green.shade800
+                                    : (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                        ? Colors.deepPurple.shade800
+                                        : Colors.amber.shade900,
                               ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 14,
+                              color: (t['status'] == 'PAGO')
+                                  ? Colors.green.shade800
+                                  : (t['status'] == 'A_CONFIRMAR' || t['status'] == 'A CONFIRMAR')
+                                      ? Colors.deepPurple.shade800
+                                      : Colors.amber.shade900,
                             ),
                           ],
                         ),

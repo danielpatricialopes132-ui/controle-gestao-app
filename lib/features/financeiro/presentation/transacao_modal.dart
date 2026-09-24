@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/categorias_provider.dart';
 import '../providers/financeiro_provider.dart';
 import '../../obras/providers/obras_provider.dart';
+import '../../obras/providers/obras_detalhe_provider.dart';
 import '../../rh/providers/rh_provider.dart';
 import '../../suprimentos/presentation/providers/suprimentos_provider.dart';
 
@@ -42,7 +43,9 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
   
   String? _categoriaSelecionada;
   String? _obraSelecionada;
+  String? _adendoSelecionadoId;
   String? _contaBancariaSelecionada;
+  String _statusSelecionado = 'PENDENTE';
   late DateTime _dataVencimento;
 
   // Vinculação de Recebedor / Beneficiário inteligente
@@ -62,7 +65,9 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
     _observacaoController = TextEditingController(text: t?['observacao'] ?? '');
     _categoriaSelecionada = t?['categoriaId'];
     _obraSelecionada = t?['obraId'];
+    _adendoSelecionadoId = t?['adendoId'];
     _contaBancariaSelecionada = t?['contaBancariaId'];
+    _statusSelecionado = t?['status'] ?? 'PENDENTE';
     _dataVencimento = t?['dataVencimento'] != null ? DateTime.parse(t!['dataVencimento']) : DateTime.now();
 
     _funcionarioSelecionadoId = t?['funcionarioId'] ?? t?['funcionario']?['id'];
@@ -327,7 +332,10 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                                     )),
                                   ],
                                   onChanged: (val) {
-                                    setState(() => _obraSelecionada = val);
+                                    setState(() {
+                                      _obraSelecionada = val;
+                                      _adendoSelecionadoId = null;
+                                    });
                                   },
                                 );
                               },
@@ -336,6 +344,74 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                             );
                           },
                         ),
+
+                        // Seletor de Vínculo: Contrato Principal vs Adendos/Aditivos
+                        if (_obraSelecionada != null) ...[
+                          const SizedBox(height: 12),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final asyncAdendos = ref.watch(obraAdendosProvider(_obraSelecionada!));
+                              return asyncAdendos.when(
+                                data: (data) {
+                                  final List<dynamic> adendos = data['adendos'] ?? [];
+                                  final contrato = data['contrato'];
+                                  return DropdownButtonFormField<String>(
+                                    value: _adendoSelecionadoId,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'Contrato / Aditivo Vinculado',
+                                      isDense: true,
+                                      border: const OutlineInputBorder(),
+                                      prefixIcon: const Icon(Icons.assignment_outlined, size: 20),
+                                      helperText: widget.isReceita
+                                          ? 'Vincule ao Contrato Principal ou a um Aditivo específico'
+                                          : 'Centro de custo do contrato ou aditivo',
+                                    ),
+                                    items: [
+                                      DropdownMenuItem<String>(
+                                        value: null,
+                                        child: Text(
+                                          contrato != null ? 'Contrato Principal (${contrato['descricao'] ?? 'Padrão'})' : 'Contrato Principal da Obra',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      ...adendos.map<DropdownMenuItem<String>>((ad) {
+                                        final valor = (ad['valor'] != null) ? ' - R\$ ${(ad['valor'] as num).toStringAsFixed(2)}' : '';
+                                        return DropdownMenuItem<String>(
+                                          value: ad['id'],
+                                          child: Text(
+                                            'Aditivo: ${ad['descricao']}$valor',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _adendoSelecionadoId = val;
+                                        if (val != null) {
+                                          final ad = adendos.firstWhere((x) => x['id'] == val, orElse: () => null);
+                                          if (ad != null && ad['descricao'] != null) {
+                                            final descAd = (ad['descricao'] as String).trim();
+                                            final descAtual = _descricaoController.text.trim();
+                                            if (!descAtual.toLowerCase().contains(descAd.toLowerCase())) {
+                                              if (descAtual.isEmpty || descAtual.toLowerCase() == 'recebimento' || descAtual.toLowerCase() == 'quitação') {
+                                                _descricaoController.text = 'Recebimento Aditivo - $descAd';
+                                              }
+                                            }
+                                          }
+                                        }
+                                      });
+                                    },
+                                  );
+                                },
+                                loading: () => const LinearProgressIndicator(),
+                                error: (e, st) => const SizedBox(),
+                              );
+                            },
+                          ),
+                        ],
 
                         // Bloco Inteligente de Vinculação de Recebedor / Beneficiário
                         if (!widget.isReceita) ...[
@@ -646,6 +722,52 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                   }
                 },
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _statusSelecionado,
+                decoration: const InputDecoration(
+                  labelText: 'Status do Lançamento',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.flag_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'PAGO',
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green, size: 18),
+                        SizedBox(width: 8),
+                        Text('PAGO / LIQUIDADO', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'PENDENTE',
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, color: Colors.amber, size: 18),
+                        SizedBox(width: 8),
+                        Text('PENDENTE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber)),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'A_CONFIRMAR',
+                    child: Row(
+                      children: [
+                        Icon(Icons.help_outline, color: Colors.deepPurple, size: 18),
+                        SizedBox(width: 8),
+                        Text('A CONFIRMAR', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                      ],
+                    ),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _statusSelecionado = val);
+                  }
+                },
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
@@ -683,10 +805,11 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                       'categoriaId': _isRateio ? null : _categoriaSelecionada,
                       'planoContaId': _isRateio ? null : _categoriaSelecionada,
                       'obraId': _isRateio ? null : _obraSelecionada,
+                      'adendoId': _isRateio ? null : _adendoSelecionadoId,
                       'contaBancariaId': _contaBancariaSelecionada,
                       'dataVencimento': _dataVencimento.toIso8601String(),
                       'tipo': widget.isReceita ? 'RECEITA' : 'DESPESA',
-                      'status': widget.transacaoExistente?['status'] ?? 'PENDENTE',
+                      'status': _statusSelecionado,
                       'rateios': _isRateio ? _rateios : [],
                       'funcionarioId': _funcionarioSelecionadoId,
                       'clienteFornecedor': _recebedorManualController.text.trim().isNotEmpty
