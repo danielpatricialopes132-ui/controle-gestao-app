@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../financeiro/providers/financeiro_provider.dart';
 import '../../../shared/utils/export_utils.dart';
+import '../utils/pdf_extrato_generator.dart';
+
 
 class ExtratoBancarioAba extends ConsumerStatefulWidget {
   final bool showAppBar;
@@ -49,18 +51,16 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
 
   void _exportarPdf(Map<String, dynamic> data) {
     final transacoes = data['transacoes'] as List;
-    ExportUtils.exportTableToPdf(
-      title: 'Extrato Bancário',
-      fileName: 'extrato_bancario',
-      headers: ['Data', 'Conta', 'Categoria', 'Descrição', 'Valor', 'Saldo'],
-      data: transacoes.map((t) => [
-        _formatDate.format(DateTime.parse(t['data'])),
-        t['conta'].toString(),
-        t['categoria'].toString(),
-        t['descricao'].toString(),
-        (t['tipo'] == 'RECEITA' ? '+ ' : '- ') + _formatCurrency.format(t['valor']),
-        _formatCurrency.format(t['saldoProgressivo']),
-      ]).toList(),
+    final saldoFinal = (data['saldoFinalPeriodo'] ?? 0).toDouble();
+
+    PdfExtratoGenerator.exportC6StylePdf(
+      transacoes: transacoes,
+      dataInicio: _dataInicio,
+      dataFim: _dataFim,
+      saldoFinal: saldoFinal,
+      empresaNome: 'ECO STONE BRASIL',
+      cnpj: '63.011.697/0001-16',
+      contaInfo: _contaSelecionada == 'todas' ? 'Todas as Contas Consolidadas' : 'Agência: 1 • Conta Corrente',
     );
   }
 
