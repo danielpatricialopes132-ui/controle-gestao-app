@@ -377,7 +377,8 @@ class _TransacaoModalState extends ConsumerState<TransacaoModal> {
                                         ),
                                       ),
                                       ...adendos.map<DropdownMenuItem<String>>((ad) {
-                                        final valor = (ad['valor'] != null) ? ' - R\$ ${(ad['valor'] as num).toStringAsFixed(2)}' : '';
+                                        final numVal = ad['valor'] != null ? (num.tryParse(ad['valor'].toString()) ?? 0.0) : null;
+                                        final valor = (numVal != null) ? ' - R\$ ${numVal.toStringAsFixed(2)}' : '';
                                         return DropdownMenuItem<String>(
                                           value: ad['id'],
                                           child: Text(

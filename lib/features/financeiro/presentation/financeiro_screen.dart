@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../providers/financeiro_provider.dart';
 import '../../rh/providers/rh_provider.dart' hide valesProvider;
 import '../../auth/providers/auth_provider.dart';
@@ -8,12 +9,10 @@ import 'transacao_modal.dart';
 import 'vale_modal.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:xml/xml.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'widgets/calculadora_financeira_modal.dart';
 import 'screens/ofx_import_screen.dart';
@@ -31,6 +30,13 @@ class FinanceiroScreen extends ConsumerStatefulWidget {
 
 class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String? _filtroTipo; // null = TODOS, 'RECEITA', 'DESPESA'
+  String? _filtroStatus; // null = TODOS, 'PAGO', 'PENDENTE', 'A_CONFIRMAR'
+  String? _filtroContaId; // null = TODAS
+  String? _filtroObraId; // null = TODAS
+  DateTimeRange? _filtroPeriodo;
 
   @override
   void initState() {
@@ -47,6 +53,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -373,152 +380,473 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
 
   Widget _buildCaixaTab() {
     final transacoesAsync = ref.watch(transacoesProvider);
+    final dateFormat = DateFormat('dd/MM/yyyy');
     
     return transacoesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Erro: $err')),
       data: (transacoes) {
-        if (transacoes.isEmpty) {
-          return const Center(child: Text('Nenhuma transação encontrada.'));
+        // Obter listas únicas para os filtros
+        final contasUnicas = <String, String>{};
+        final obrasUnicas = <String, String>{};
+        for (final t in transacoes) {
+          if (t['contaBancaria'] != null && t['contaBancariaId'] != null) {
+            contasUnicas[t['contaBancariaId']] = t['contaBancaria']['nome'] ?? 'Conta';
+          }
+          if (t['obra'] != null && t['obraId'] != null) {
+            obrasUnicas[t['obraId']] = t['obra']['nome'] ?? 'Obra';
+          }
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16.0),
-          itemCount: transacoes.length,
-          itemBuilder: (context, index) {
-            final t = transacoes[index];
-            final isReceita = t['tipo'] == 'RECEITA';
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12.0),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                leading: CircleAvatar(
-                  backgroundColor: isReceita ? Colors.green.shade50 : Colors.red.shade50,
-                  child: Icon(
-                    isReceita ? Icons.arrow_upward : Icons.arrow_downward,
-                    color: isReceita ? Colors.green : Colors.red,
-                  ),
-                ),
-                title: Text(
-                  t['descricao'] ?? '', 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    // Plano de Contas / Categoria
-                    Row(
-                      children: [
-                        const Icon(Icons.account_tree_outlined, size: 13, color: Colors.blueGrey),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            t['categoriaFk'] != null
-                                ? '${t['categoriaFk']['codigo'] != null ? '${t['categoriaFk']['codigo']} - ' : ''}${t['categoriaFk']['descricao'] ?? t['categoriaFk']['nome']}'
-                                : 'Sem Plano de Contas',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
-                            overflow: TextOverflow.ellipsis,
+
+        // Aplicar filtros
+        final filtradas = transacoes.where((t) {
+          // Filtro de Texto (Descrição, Cliente/Fornecedor, Favorecido, Categoria)
+          if (_searchQuery.isNotEmpty) {
+            final query = _searchQuery.toLowerCase();
+            final desc = (t['descricao'] ?? '').toString().toLowerCase();
+            final cli = (t['clienteFornecedor'] ?? '').toString().toLowerCase();
+            final func = (t['funcionario']?['nome'] ?? '').toString().toLowerCase();
+            final cat = (t['categoriaFk']?['descricao'] ?? t['categoriaFk']?['codigo'] ?? '').toString().toLowerCase();
+            final obra = (t['obra']?['nome'] ?? '').toString().toLowerCase();
+            final conta = (t['contaBancaria']?['nome'] ?? '').toString().toLowerCase();
+            final matches = desc.contains(query) || cli.contains(query) || func.contains(query) || cat.contains(query) || obra.contains(query) || conta.contains(query);
+            if (!matches) return false;
+          }
+
+          // Filtro de Tipo (RECEITA / DESPESA)
+          if (_filtroTipo != null && t['tipo'] != _filtroTipo) {
+            return false;
+          }
+
+          // Filtro de Status (PAGO / PENDENTE / A_CONFIRMAR)
+          if (_filtroStatus != null) {
+            if (_filtroStatus == 'A_CONFIRMAR') {
+              if (t['status'] != 'A_CONFIRMAR' && t['status'] != 'A CONFIRMAR') return false;
+            } else if (t['status'] != _filtroStatus) {
+              return false;
+            }
+          }
+
+          // Filtro de Conta Bancária
+          if (_filtroContaId != null && t['contaBancariaId'] != _filtroContaId) {
+            return false;
+          }
+
+          // Filtro de Obra
+          if (_filtroObraId != null && t['obraId'] != _filtroObraId) {
+            return false;
+          }
+
+          // Filtro de Período
+          if (_filtroPeriodo != null) {
+            final dataStr = t['dataVencimento'] ?? t['createdAt'];
+            if (dataStr != null) {
+              final d = DateTime.tryParse(dataStr.toString());
+              if (d != null) {
+                if (d.isBefore(_filtroPeriodo!.start) || d.isAfter(_filtroPeriodo!.end.add(const Duration(days: 1)))) {
+                  return false;
+                }
+              }
+            }
+          }
+
+          return true;
+        }).toList();
+
+        return Column(
+          children: [
+            // BARRA DE PESQUISA E FILTROS DINÂMICOS
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              color: Colors.grey.shade50,
+              child: Column(
+                children: [
+                  // Campo de Busca
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Pesquisar descrição, favorecido, obra ou categoria...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                  )
+                                : null,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                          onChanged: (val) {
+                            setState(() => _searchQuery = val.trim());
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Botão Seletor de Período
+                      OutlinedButton.icon(
+                        icon: Icon(
+                          Icons.date_range,
+                          size: 18,
+                          color: _filtroPeriodo != null ? Colors.teal : Colors.grey.shade700,
+                        ),
+                        label: Text(
+                          _filtroPeriodo != null
+                              ? '${dateFormat.format(_filtroPeriodo!.start)} - ${dateFormat.format(_filtroPeriodo!.end)}'
+                              : 'Período',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: _filtroPeriodo != null ? FontWeight.bold : FontWeight.normal,
+                            color: _filtroPeriodo != null ? Colors.teal.shade900 : Colors.black87,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Badges: Conta Bancária / Caixa + Colaborador / Fornecedor + OFX
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: _filtroPeriodo != null ? Colors.teal.shade50 : Colors.white,
+                          side: BorderSide(color: _filtroPeriodo != null ? Colors.teal : Colors.grey.shade300),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () async {
+                          final picked = await showDateRangePicker(
+                            context: context,
+                            firstDate: DateTime(2025, 1, 1),
+                            lastDate: DateTime(2027, 12, 31),
+                            initialDateRange: _filtroPeriodo,
+                          );
+                          if (picked != null) {
+                            setState(() => _filtroPeriodo = picked);
+                          } else if (_filtroPeriodo != null) {
+                            // Se cancelou tendo filtro, permitir limpar
+                            setState(() => _filtroPeriodo = null);
+                          }
+                        },
+                      ),
+                      if (_filtroTipo != null || _filtroStatus != null || _filtroContaId != null || _filtroObraId != null || _filtroPeriodo != null || _searchQuery.isNotEmpty)
+                        IconButton(
+                          tooltip: 'Limpar todos os filtros',
+                          icon: const Icon(Icons.filter_alt_off, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                              _searchQuery = '';
+                              _filtroTipo = null;
+                              _filtroStatus = null;
+                              _filtroContaId = null;
+                              _filtroObraId = null;
+                              _filtroPeriodo = null;
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Filtros Rápidos (Chips)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
                       children: [
-                        if (t['contaBancaria'] != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.blue.shade200, width: 0.8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.account_balance, size: 11, color: Colors.blue.shade800),
-                                const SizedBox(width: 4),
-                                Text(
-                                  t['contaBancaria']['nome'],
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
-                                ),
-                              ],
-                            ),
+                        // Filtro de Tipo
+                        FilterChip(
+                          label: const Text('Receitas (+)', style: TextStyle(fontSize: 11)),
+                          selected: _filtroTipo == 'RECEITA',
+                          selectedColor: Colors.green.shade100,
+                          checkmarkColor: Colors.green.shade900,
+                          onSelected: (selected) {
+                            setState(() => _filtroTipo = selected ? 'RECEITA' : null);
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                        FilterChip(
+                          label: const Text('Despesas (-)', style: TextStyle(fontSize: 11)),
+                          selected: _filtroTipo == 'DESPESA',
+                          selectedColor: Colors.red.shade100,
+                          checkmarkColor: Colors.red.shade900,
+                          onSelected: (selected) {
+                            setState(() => _filtroTipo = selected ? 'DESPESA' : null);
+                          },
+                        ),
+                        const SizedBox(width: 6),
+
+                        // Filtros de Status
+                        FilterChip(
+                          label: const Text('PAGO', style: TextStyle(fontSize: 11)),
+                          selected: _filtroStatus == 'PAGO',
+                          selectedColor: Colors.green.shade100,
+                          checkmarkColor: Colors.green.shade900,
+                          onSelected: (selected) {
+                            setState(() => _filtroStatus = selected ? 'PAGO' : null);
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                        FilterChip(
+                          label: const Text('PENDENTE', style: TextStyle(fontSize: 11)),
+                          selected: _filtroStatus == 'PENDENTE',
+                          selectedColor: Colors.amber.shade100,
+                          checkmarkColor: Colors.amber.shade900,
+                          onSelected: (selected) {
+                            setState(() => _filtroStatus = selected ? 'PENDENTE' : null);
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                        FilterChip(
+                          label: const Text('A CONFIRMAR', style: TextStyle(fontSize: 11)),
+                          selected: _filtroStatus == 'A_CONFIRMAR',
+                          selectedColor: Colors.deepPurple.shade100,
+                          checkmarkColor: Colors.deepPurple.shade900,
+                          onSelected: (selected) {
+                            setState(() => _filtroStatus = selected ? 'A_CONFIRMAR' : null);
+                          },
+                        ),
+                        const SizedBox(width: 10),
+
+                        // Dropdown de Conta Bancária
+                        if (contasUnicas.isNotEmpty)
+                          DropdownButton<String?>(
+                            value: _filtroContaId,
+                            hint: const Text('Conta Bancária', style: TextStyle(fontSize: 12)),
+                            underline: const SizedBox(),
+                            icon: const Icon(Icons.account_balance, size: 14),
+                            items: [
+                              const DropdownMenuItem<String?>(value: null, child: Text('Todas as Contas', style: TextStyle(fontSize: 12))),
+                              ...contasUnicas.entries.map((e) => DropdownMenuItem<String?>(
+                                value: e.key,
+                                child: Text(e.value, style: const TextStyle(fontSize: 12)),
+                              )),
+                            ],
+                            onChanged: (val) => setState(() => _filtroContaId = val),
                           ),
-                        if (t['funcionario'] != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.purple.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.purple.shade200, width: 0.8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.person, size: 11, color: Colors.purple.shade800),
-                                const SizedBox(width: 4),
-                                Text(
-                                  t['funcionario']['nome'] ?? '',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple.shade900),
-                                ),
-                              ],
-                            ),
-                          )
-                        else if (t['clienteFornecedor'] != null && (t['clienteFornecedor'] as String).isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.orange.shade200, width: 0.8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.storefront, size: 11, color: Colors.orange.shade800),
-                                const SizedBox(width: 4),
-                                Text(
-                                  t['clienteFornecedor'],
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange.shade900),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (t['obra'] != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.teal.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.teal.shade200, width: 0.8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.apartment, size: 11, color: Colors.teal.shade800),
-                                const SizedBox(width: 4),
-                                Text(
-                                  t['obra']['nome'] ?? '',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (t['isConciliada'] == true)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
-                            child: const Text('OFX', style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 10),
+
+                        // Dropdown de Obra
+                        if (obrasUnicas.isNotEmpty)
+                          DropdownButton<String?>(
+                            value: _filtroObraId,
+                            hint: const Text('Obra', style: TextStyle(fontSize: 12)),
+                            underline: const SizedBox(),
+                            icon: const Icon(Icons.apartment, size: 14),
+                            items: [
+                              const DropdownMenuItem<String?>(value: null, child: Text('Todas as Obras', style: TextStyle(fontSize: 12))),
+                              ...obrasUnicas.entries.map((e) => DropdownMenuItem<String?>(
+                                value: e.key,
+                                child: Text(e.value, style: const TextStyle(fontSize: 12)),
+                              )),
+                            ],
+                            onChanged: (val) => setState(() => _filtroObraId = val),
                           ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+            ),
+
+            // LISTA DE TRANSAÇÕES FILTRADAS
+            Expanded(
+              child: filtradas.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                          const SizedBox(height: 8),
+                          const Text('Nenhum lançamento encontrado com os filtros aplicados.', style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: filtradas.length,
+                      itemBuilder: (context, index) {
+                        final t = filtradas[index];
+                        final isReceita = t['tipo'] == 'RECEITA';
+
+                        // Data formatada do lançamento
+                        String dataFormatada = '';
+                        final dataRaw = t['dataVencimento'] ?? t['dataPagamento'] ?? t['createdAt'];
+                        if (dataRaw != null) {
+                          final dt = DateTime.tryParse(dataRaw.toString());
+                          if (dt != null) {
+                            dataFormatada = dateFormat.format(dt);
+                          }
+                        }
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12.0),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            leading: CircleAvatar(
+                              backgroundColor: isReceita ? Colors.green.shade50 : Colors.red.shade50,
+                              child: Icon(
+                                isReceita ? Icons.arrow_upward : Icons.arrow_downward,
+                                color: isReceita ? Colors.green : Colors.red,
+                              ),
+                            ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    t['descricao'] ?? '', 
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (dataFormatada.isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: Colors.grey.shade300, width: 0.8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.calendar_today, size: 10, color: Colors.grey.shade700),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          dataFormatada,
+                                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                // Plano de Contas / Categoria
+                                Row(
+                                  children: [
+                                    const Icon(Icons.account_tree_outlined, size: 13, color: Colors.blueGrey),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        t['categoriaFk'] != null
+                                            ? '${t['categoriaFk']['codigo'] != null ? '${t['categoriaFk']['codigo']} - ' : ''}${t['categoriaFk']['descricao'] ?? t['categoriaFk']['nome']}'
+                                            : 'Sem Plano de Contas',
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                // Badges: Conta Bancária / Caixa + Colaborador / Fornecedor + OFX
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    if (t['contaBancaria'] != null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.blue.shade200, width: 0.8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.account_balance, size: 11, color: Colors.blue.shade800),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              t['contaBancaria']['nome'],
+                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (t['funcionario'] != null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.purple.shade50,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.purple.shade200, width: 0.8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.person, size: 11, color: Colors.purple.shade800),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              t['funcionario']['nome'] ?? '',
+                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple.shade900),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else if (t['clienteFornecedor'] != null && (t['clienteFornecedor'] as String).isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.shade50,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.orange.shade200, width: 0.8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.storefront, size: 11, color: Colors.orange.shade800),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              t['clienteFornecedor'],
+                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange.shade900),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (t['obra'] != null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.teal.shade50,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.teal.shade200, width: 0.8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.apartment, size: 11, color: Colors.teal.shade800),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              t['obra']['nome'] ?? '',
+                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (t['isConciliada'] == true)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                        decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
+                                        child: const Text('OFX', style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold)),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -688,10 +1016,13 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
               ),
             );
           },
-        );
-      },
-    );
-  }
+        ),
+      ),
+    ],
+  );
+},
+);
+}
 
   Widget _buildValesTab() {
     final valesAsync = ref.watch(valesProvider);

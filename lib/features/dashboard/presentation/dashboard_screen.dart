@@ -33,6 +33,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
   List<dynamic> _tenants = [];
   bool _isLoadingTenants = false;
+  String? _contaFiltroId; // null = Consolidado / C6 principal
 
   @override
   void initState() {
@@ -543,11 +544,90 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildTenantDashboard(Map<String, dynamic> stats) {
     final formatCurrency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final List<dynamic> saldosContas = stats['saldosPorConta'] ?? [];
     
+    // Calcular métricas conforme conta selecionada
+    double saldoExibido = _parseValue(stats['saldoEmCaixa']);
+    double fluxoRecExibido = _parseValue(stats['fluxo']?['receitasPagas']);
+    String labelSaldo = 'Saldo em Caixa (Geral)';
+
+    if (_contaFiltroId != null) {
+      final contaItem = saldosContas.firstWhere(
+        (c) => c['id'] == _contaFiltroId,
+        orElse: () => null,
+      );
+      if (contaItem != null) {
+        saldoExibido = _parseValue(contaItem['saldo']);
+        fluxoRecExibido = _parseValue(contaItem['receitas']);
+        labelSaldo = 'Saldo: ${contaItem['nome']}';
+      }
+    } else {
+      // Prioridade C6 se existir nas contas
+      final c6 = saldosContas.firstWhere(
+        (c) => (c['nome'] as String).toLowerCase().contains('c6'),
+        orElse: () => null,
+      );
+      if (c6 != null) {
+        labelSaldo = 'Saldo C6 (Operacional)';
+        saldoExibido = _parseValue(c6['saldo']);
+      }
+    }
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Barra de Filtro de Conta Bancária
+          if (saldosContas.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.teal.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.teal.shade200, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.account_balance, color: Colors.teal.shade800, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Conta Bancária:',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal.shade900, fontSize: 13),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String?>(
+                        value: _contaFiltroId,
+                        isDense: true,
+                        icon: Icon(Icons.arrow_drop_down, color: Colors.teal.shade900),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('C6 Bank (Conta Principal da Operação)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
+                          ...saldosContas.map((c) => DropdownMenuItem<String?>(
+                            value: c['id'],
+                            child: Text(
+                              '${c['nome']}  (Saldo: ${formatCurrency.format(_parseValue(c['saldo']))})',
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          )),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            _contaFiltroId = val;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // Row 1: Key Metrics
           LayoutBuilder(
             builder: (context, constraints) {
@@ -558,11 +638,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   SizedBox(
                     width: isDesktop ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
-                    child: _buildMetricCard('Saldo em Caixa', formatCurrency.format(_parseValue(stats['saldoEmCaixa'])), Icons.account_balance_wallet, Colors.teal),
+                    child: _buildMetricCard(labelSaldo, formatCurrency.format(saldoExibido), Icons.account_balance_wallet, Colors.teal),
                   ),
                   SizedBox(
                     width: isDesktop ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
-                    child: _buildMetricCard('Fluxo Realizado (Rec)', formatCurrency.format(_parseValue(stats['fluxo']?['receitasPagas'])), Icons.trending_up, Colors.green),
+                    child: _buildMetricCard('Fluxo Realizado (Rec)', formatCurrency.format(fluxoRecExibido), Icons.trending_up, Colors.green),
                   ),
                   SizedBox(
                     width: isDesktop ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
