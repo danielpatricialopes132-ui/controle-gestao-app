@@ -252,6 +252,14 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildConciliationAlert(transacoes),
+                      )
+                    ],
+                  ),
                   const SizedBox(height: 20),
 
                   // Lista de Transações com visual bancário
@@ -314,11 +322,44 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          t['descricao'] ?? 'Sem descrição',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                t['descricao'] ?? 'Sem descrição',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (t['isConciliada'] == true)
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 8),
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.green.shade200)),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.check_circle, size: 10, color: Colors.green.shade600),
+                                                    const SizedBox(width: 4),
+                                                    Text('Conciliado', style: TextStyle(fontSize: 10, color: Colors.green.shade700, fontWeight: FontWeight.bold)),
+                                                  ],
+                                                ),
+                                              )
+                                            else
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 8),
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.orange.shade200)),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.warning_amber_rounded, size: 10, color: Colors.orange.shade600),
+                                                    const SizedBox(width: 4),
+                                                    Text('Não Conciliado', style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.bold)),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 6),
                                         Row(
                                           children: [
                                             Text(
@@ -518,5 +559,90 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
         ],
       ),
     );
+  }
+
+  Widget _buildConciliationAlert(List transacoes) {
+    int naoConciliadosCount = 0;
+    double valorNaoConciliado = 0;
+    
+    for (var t in transacoes) {
+      if (t['isConciliada'] != true) {
+        naoConciliadosCount++;
+        final val = (t['valor'] ?? 0).toDouble();
+        if (t['tipo'] == 'RECEITA') {
+          valorNaoConciliado += val;
+        } else {
+          valorNaoConciliado -= val;
+        }
+      }
+    }
+
+    if (naoConciliadosCount == 0 && transacoes.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.green.shade50,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.green.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.green.shade700),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Perfeito! Todas as movimentações deste período estão conciliadas com o banco.',
+                style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (naoConciliadosCount > 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.orange.shade700),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Atenção à Conciliação',
+                    style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Existem $naoConciliadosCount transações neste período que ainda não foram conciliadas no sistema (Diferença de ${_formatCurrency.format(valorNaoConciliado.abs())}).',
+                    style: TextStyle(color: Colors.orange.shade800, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade600,
+                foregroundColor: Colors.white,
+                elevation: 0,
+              ),
+              onPressed: () {
+                // Aqui podemos navegar para a aba de Conciliação
+              },
+              child: const Text('Ir para Conciliação'),
+            )
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
