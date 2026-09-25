@@ -18,95 +18,147 @@ class RelatoriosScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 5,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF0F172A),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007A8D).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.bar_chart_rounded, color: Colors.tealAccent, size: 22),
-              ),
-              const SizedBox(width: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Painel de Relatórios & Inteligência',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  Text(
-                    'Gestão Contábil, Bancária, Auditoria e Margens',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(48),
-            child: Container(
-              color: const Color(0xFF1E293B),
-              child: const TabBar(
-                isScrollable: true,
-                indicatorColor: Color(0xFF007A8D),
-                indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white60,
-                labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                tabs: [
-                  Tab(icon: Icon(Icons.analytics_outlined, size: 18), text: 'DRE Gerencial'),
-                  Tab(icon: Icon(Icons.account_balance_wallet_outlined, size: 18), text: 'Extrato Bancário'),
-                  Tab(icon: Icon(Icons.policy_outlined, size: 18), text: 'Auditoria (A Confirmar)'),
-                  Tab(icon: Icon(Icons.show_chart_rounded, size: 18), text: 'Fluxo de Caixa'),
-                  Tab(icon: Icon(Icons.leaderboard_outlined, size: 18), text: 'Lucratividade por Obra'),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E293B),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                onPressed: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: mesAno,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                    initialDatePickerMode: DatePickerMode.year,
-                  );
-                  if (date != null) {
-                    ref.read(relatorioMesAnoProvider.notifier).setDate(date);
-                  }
-                },
-                icon: const Icon(Icons.calendar_month, color: Colors.tealAccent, size: 18),
-                label: Text(
-                  DateFormat('MM/yyyy').format(mesAno),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
-        body: const TabBarView(
+        backgroundColor: const Color(0xFFF3F4F6),
+        body: Column(
           children: [
-            DREAba(),
-            ExtratoBancarioAba(),
-            AuditoriaConfirmarAba(),
-            FluxoCaixaAba(),
-            LucratividadeAba(),
+            // Premium Header
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFF38BDF8), Color(0xFF0284C7)]),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(color: const Color(0xFF0284C7).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 2)),
+                              ],
+                            ),
+                            child: const Icon(Icons.insights_rounded, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Inteligência & Relatórios',
+                                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Análise gerencial, auditoria financeira e resultados',
+                                  style: TextStyle(fontSize: 13, color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: mesAno,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2100),
+                                  initialDatePickerMode: DatePickerMode.year,
+                                  builder: (context, child) => Theme(
+                                    data: ThemeData.light().copyWith(
+                                      colorScheme: const ColorScheme.light(primary: Color(0xFF0EA5E9)),
+                                    ),
+                                    child: child!,
+                                  ),
+                                );
+                                if (date != null) {
+                                  ref.read(relatorioMesAnoProvider.notifier).setDate(date);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.calendar_month_rounded, color: Color(0xFF38BDF8), size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      DateFormat('MMMM / yyyy', 'pt_BR').format(mesAno).toUpperCase(),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: 0.5),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_drop_down_rounded, color: Colors.white70),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                      ),
+                      child: TabBar(
+                        isScrollable: true,
+                        indicator: const UnderlineTabIndicator(
+                          borderSide: BorderSide(width: 3.0, color: Color(0xFF38BDF8)),
+                          insets: EdgeInsets.symmetric(horizontal: 16.0),
+                        ),
+                        labelColor: const Color(0xFF38BDF8),
+                        unselectedLabelColor: Colors.white60,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        tabs: const [
+                          Tab(text: 'DRE Gerencial'),
+                          Tab(text: 'Extrato Bancário'),
+                          Tab(text: 'Auditoria'),
+                          Tab(text: 'Fluxo de Caixa'),
+                          Tab(text: 'Lucratividade'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Expanded(
+              child: TabBarView(
+                physics: BouncingScrollPhysics(),
+                children: [
+                  DREAba(),
+                  ExtratoBancarioAba(),
+                  AuditoriaConfirmarAba(),
+                  FluxoCaixaAba(),
+                  LucratividadeAba(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
