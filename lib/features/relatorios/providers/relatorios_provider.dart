@@ -1,26 +1,40 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import '../../../shared/providers/api_client_provider.dart';
 
-class RelatoriosController extends AsyncNotifier<void> {
-  @override
-  FutureOr<void> build() {}
+class RelatoriosService {
+  final dynamic _api;
+  RelatoriosService(this._api);
 
-  Future<Map<String, dynamic>> fetchDRE({int? mes, int? ano}) async {
+  Future<Map<String, dynamic>> getRelatorioGerencial({int? mes, int? ano}) async {
     String urlStr = '/relatorios/gerencial';
     if (mes != null && ano != null) {
       urlStr += '?mes=$mes&ano=$ano';
     }
-    
-    final api = ref.read(apiClientProvider);
-    final response = await api.get(urlStr);
+    final response = await _api.get(urlStr);
     return response as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> getGerencialObra(String obraId) async {
+    final response = await _api.get('/relatorios/gerencial?obraId=$obraId');
+    return response as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getFrequenciaPonto({String? obraId, int? mes, int? ano}) async {
+    String urlStr = '/relatorios/frequencia-ponto?';
+    if (obraId != null && obraId.isNotEmpty) urlStr += 'obraId=$obraId&';
+    if (mes != null) urlStr += 'mes=$mes&';
+    if (ano != null) urlStr += 'ano=$ano';
+    final response = await _api.get(urlStr);
+    return response as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> fetchDRE({int? mes, int? ano}) async {
+    return getRelatorioGerencial(mes: mes, ano: ano);
+  }
+
   Future<List<dynamic>> fetchFluxoCaixa({int meses = 6}) async {
-    final api = ref.read(apiClientProvider);
-    final response = await api.get('/relatorios/fluxo-caixa?meses=$meses');
+    final response = await _api.get('/relatorios/fluxo-caixa?meses=$meses');
     return response as List<dynamic>;
   }
 
@@ -29,10 +43,30 @@ class RelatoriosController extends AsyncNotifier<void> {
     if (mes != null && ano != null) {
       urlStr += '?mes=$mes&ano=$ano';
     }
-    
-    final api = ref.read(apiClientProvider);
-    final response = await api.get(urlStr);
+    final response = await _api.get(urlStr);
     return response as Map<String, dynamic>;
+  }
+}
+
+final relatoriosProvider = Provider<RelatoriosService>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return RelatoriosService(api);
+});
+
+class RelatoriosController extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
+
+  Future<Map<String, dynamic>> fetchDRE({int? mes, int? ano}) async {
+    return ref.read(relatoriosProvider).fetchDRE(mes: mes, ano: ano);
+  }
+
+  Future<List<dynamic>> fetchFluxoCaixa({int meses = 6}) async {
+    return ref.read(relatoriosProvider).fetchFluxoCaixa(meses: meses);
+  }
+
+  Future<Map<String, dynamic>> fetchLucratividade({int? mes, int? ano}) async {
+    return ref.read(relatoriosProvider).fetchLucratividade(mes: mes, ano: ano);
   }
 }
 
@@ -43,6 +77,10 @@ final relatoriosControllerProvider = AsyncNotifierProvider<RelatoriosController,
 class RelatorioMesAnoNotifier extends Notifier<DateTime> {
   @override
   DateTime build() => DateTime.now();
+
+  void setDate(DateTime date) {
+    state = date;
+  }
 }
 
 final relatorioMesAnoProvider = NotifierProvider<RelatorioMesAnoNotifier, DateTime>(() {
@@ -51,16 +89,16 @@ final relatorioMesAnoProvider = NotifierProvider<RelatorioMesAnoNotifier, DateTi
 
 final dreProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final date = ref.watch(relatorioMesAnoProvider);
-  return ref.read(relatoriosControllerProvider.notifier).fetchDRE(mes: date.month, ano: date.year);
+  return ref.read(relatoriosProvider).fetchDRE(mes: date.month, ano: date.year);
 });
 
 final fluxoCaixaProvider = FutureProvider<List<dynamic>>((ref) async {
-  return ref.read(relatoriosControllerProvider.notifier).fetchFluxoCaixa(meses: 6);
+  return ref.read(relatoriosProvider).fetchFluxoCaixa(meses: 6);
 });
 
 final lucratividadeProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final date = ref.watch(relatorioMesAnoProvider);
-  return ref.read(relatoriosControllerProvider.notifier).fetchLucratividade(mes: date.month, ano: date.year);
+  return ref.read(relatoriosProvider).fetchLucratividade(mes: date.month, ano: date.year);
 });
 
 class LivroCaixaFilters {
@@ -82,10 +120,6 @@ class LivroCaixaFilters {
     return LivroCaixaFilters(
       dataInicio: dataInicio ?? this.dataInicio,
       dataFim: dataFim ?? this.dataFim,
-      // If we want to allow nulling contaBancariaId, we can't do it simply with copyWith unless we use a wrapper, 
-      // but here we just assume value can be null in the argument. To allow setting to null when copyWith is called, 
-      // wait, the dropdown passes null! So we should allow it. But Dart doesn't distinguish between absent and null well.
-      // We will just do a simple check. Actually, in dropdown we just pass the new value.
       contaBancariaId: contaBancariaId, 
     );
   }
@@ -117,7 +151,29 @@ final livroCaixaProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   
   final response = await api.get(url);
   if (response is Map<String, dynamic>) return response;
-  // Fallback
   return {'saldoAnterior': 0, 'transacoes': []};
 });
 
+class AuditoriaBuscaNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void setBusca(String val) {
+    state = val;
+  }
+}
+
+final auditoriaConfirmarBuscaProvider = NotifierProvider<AuditoriaBuscaNotifier, String>(() {
+  return AuditoriaBuscaNotifier();
+});
+
+final auditoriaConfirmarProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final busca = ref.watch(auditoriaConfirmarBuscaProvider);
+  String url = '/financeiro/relatorios/auditoria-confirmar';
+  if (busca.trim().isNotEmpty) {
+    url += '?busca=${Uri.encodeComponent(busca.trim())}';
+  }
+  final response = await api.get(url);
+  return response as Map<String, dynamic>;
+});

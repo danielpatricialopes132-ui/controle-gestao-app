@@ -7,8 +7,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart'; // Será gerado pelo flutterfire configure
 import 'core/services/push_notification_service.dart';
 
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Intl.defaultLocale = 'pt_BR';
+  await initializeDateFormatting('pt_BR', null);
   
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
