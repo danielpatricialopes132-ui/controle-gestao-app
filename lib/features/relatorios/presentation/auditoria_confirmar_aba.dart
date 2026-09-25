@@ -203,15 +203,6 @@ class _AuditoriaConfirmarAbaState extends ConsumerState<AuditoriaConfirmarAba> {
                       },
                     ),
                 ],
-              ),
-            ),
-            if (_isProcessing)
-              Container(
-                color: Colors.black.withOpacity(0.2),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
           ],
         );
       },
