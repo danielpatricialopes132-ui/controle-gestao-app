@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/dashboard_provider.dart';
 
 class DreDashboardView extends ConsumerStatefulWidget {
-  const DreDashboardView({Key? key}) : super(key: key);
+  const DreDashboardView({super.key});
 
   @override
   ConsumerState<DreDashboardView> createState() => _DreDashboardViewState();
@@ -74,8 +74,41 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
         ),
         const SizedBox(height: 16),
         dreAsync.when(
-          loading: () => const SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
-          error: (err, stack) => SizedBox(height: 200, child: Center(child: Text('Erro ao carregar DRE: $err'))),
+          loading: () => const SizedBox(
+            height: 180,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(strokeWidth: 2),
+                  SizedBox(height: 12),
+                  Text('Carregando dados da DRE...', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ],
+              ),
+            ),
+          ),
+          error: (err, stack) => Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.red.shade700),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Não foi possível carregar os dados contábeis da DRE: $err', style: TextStyle(color: Colors.red.shade800, fontSize: 13)),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Recarregar'),
+                  onPressed: () => ref.invalidate(dreProvider),
+                ),
+              ],
+            ),
+          ),
           data: (data) {
             final ind = data['indicadores'] ?? {};
             return Column(
@@ -128,7 +161,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
         borderRadius: BorderRadius.circular(8),
         border: Border(left: BorderSide(color: color, width: 4)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
         ]
       ),
       child: Column(
@@ -221,7 +254,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: ((recBruta > 0 ? recBruta : 1000) / 4),
+                    horizontalInterval: (recBruta > 0 ? (recBruta / 4) : 250),
                   ),
                   borderData: FlBorderData(show: false),
                   barGroups: [

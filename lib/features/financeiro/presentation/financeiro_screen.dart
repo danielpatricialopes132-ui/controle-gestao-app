@@ -37,6 +37,8 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
   String? _filtroContaId; // null = TODAS
   String? _filtroObraId; // null = TODAS
   DateTimeRange? _filtroPeriodo;
+  String _ordemCampo = 'data'; // 'data', 'valor', 'descricao'
+  bool _ordemCrescente = false; // false = mais recente / maior primeiro, true = mais antigo / menor primeiro
 
   @override
   void initState() {
@@ -103,7 +105,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
           ),
           IconButton(
             icon: const Icon(Icons.import_export),
-            tooltip: 'Conciliação OFX',
+            tooltip: 'Conciliação Bancária (OFX / PDF)',
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfxImportScreen())),
           ),
           IconButton(
@@ -200,7 +202,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             title: const Text('Tirar Foto (Câmera)'),
             onTap: () {
               Navigator.pop(ctx);
-              _processarScan(context, ImageSource.camera);
+              _processarScan(ImageSource.camera);
             },
           ),
           ListTile(
@@ -208,7 +210,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             title: const Text('Escolher da Galeria'),
             onTap: () {
               Navigator.pop(ctx);
-              _processarScan(context, ImageSource.gallery);
+              _processarScan(ImageSource.gallery);
             },
           ),
           ListTile(
@@ -216,7 +218,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
             title: const Text('Escanear PDF/Imagem (IA)'),
             onTap: () {
               Navigator.pop(ctx);
-              _processarPdf(context);
+              _processarPdf();
             },
           ),
           ListTile(
@@ -232,7 +234,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
     );
   }
 
-  Future<void> _processarScan(BuildContext context, ImageSource source) async {
+  Future<void> _processarScan(ImageSource source) async {
     try {
       final picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: source);
@@ -250,14 +252,16 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
       );
       
       final base64String = base64Encode(compressedBytes);
-      
+      if (!mounted) return;
       _enviarParaBackend(context, base64String, 'image/jpeg');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao capturar imagem: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao capturar imagem: $e')));
+      }
     }
   }
 
-  Future<void> _processarPdf(BuildContext context) async {
+  Future<void> _processarPdf() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -269,11 +273,14 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
         if (path != null) {
           final bytes = await File(path).readAsBytes();
           final base64String = base64Encode(bytes);
+          if (!mounted) return;
           _enviarParaBackend(context, base64String, 'application/pdf');
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao ler PDF: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao ler PDF: $e')));
+      }
     }
   }
 
@@ -452,6 +459,27 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
 
           return true;
         }).toList();
+
+        // Ordenação dinâmica (Padrão: Data decrescente - mais recente primeiro)
+        filtradas.sort((a, b) {
+          int cmp = 0;
+          if (_ordemCampo == 'data') {
+            final dataAStr = a['dataVencimento'] ?? a['dataPagamento'] ?? a['createdAt'];
+            final dataBStr = b['dataVencimento'] ?? b['dataPagamento'] ?? b['createdAt'];
+            final dtA = dataAStr != null ? (DateTime.tryParse(dataAStr.toString()) ?? DateTime(1970)) : DateTime(1970);
+            final dtB = dataBStr != null ? (DateTime.tryParse(dataBStr.toString()) ?? DateTime(1970)) : DateTime(1970);
+            cmp = dtA.compareTo(dtB);
+          } else if (_ordemCampo == 'valor') {
+            final valA = a['valor'] is num ? (a['valor'] as num).toDouble() : (double.tryParse(a['valor']?.toString() ?? '0') ?? 0.0);
+            final valB = b['valor'] is num ? (b['valor'] as num).toDouble() : (double.tryParse(b['valor']?.toString() ?? '0') ?? 0.0);
+            cmp = valA.compareTo(valB);
+          } else if (_ordemCampo == 'descricao') {
+            final descA = (a['descricao'] ?? '').toString().toLowerCase();
+            final descB = (b['descricao'] ?? '').toString().toLowerCase();
+            cmp = descA.compareTo(descB);
+          }
+          return _ordemCrescente ? cmp : -cmp;
+        });
 
         return Column(
           children: [
@@ -649,6 +677,61 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                             ],
                             onChanged: (val) => setState(() => _filtroObraId = val),
                           ),
+                        const SizedBox(width: 12),
+
+                        // Separador Vertical
+                        Container(height: 18, width: 1, color: Colors.grey.shade300),
+                        const SizedBox(width: 12),
+
+                        // Botão / Seletor de Ordenação
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            setState(() {
+                              _ordemCrescente = !_ordemCrescente;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.blueGrey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blueGrey.shade200),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _ordemCrescente ? Icons.arrow_upward : Icons.arrow_downward,
+                                  size: 14,
+                                  color: Colors.blueGrey.shade800,
+                                ),
+                                const SizedBox(width: 4),
+                                DropdownButton<String>(
+                                  value: _ordemCampo,
+                                  underline: const SizedBox(),
+                                  isDense: true,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueGrey.shade900,
+                                  ),
+                                  icon: const Icon(Icons.arrow_drop_down, size: 16),
+                                  items: const [
+                                    DropdownMenuItem(value: 'data', child: Text('Data')),
+                                    DropdownMenuItem(value: 'valor', child: Text('Valor')),
+                                    DropdownMenuItem(value: 'descricao', child: Text('Descrição')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() => _ordemCampo = val);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1131,7 +1214,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> with Single
                 error: (e, st) => Text('Erro ao carregar funcionários: $e'),
                 data: (funcs) {
                   return DropdownButtonFormField<String>(
-                    value: funcs.any((f) => f['id'] == funcionarioSelecionado) ? funcionarioSelecionado : null,
+                    initialValue: funcs.any((f) => f['id'] == funcionarioSelecionado) ? funcionarioSelecionado : null,
                     decoration: const InputDecoration(
                       labelText: 'Funcionário',
                       border: OutlineInputBorder(),

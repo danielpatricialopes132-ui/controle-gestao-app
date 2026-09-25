@@ -233,6 +233,23 @@ class FinanceiroController extends Notifier<AsyncValue<void>> {
     }
   }
 
+  Future<List<dynamic>> uploadExtratoPdf(String base64, String mimeType, String fileName) async {
+    state = const AsyncLoading();
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post('/financeiro/conciliacao/pdf', {
+        'base64': base64,
+        'mimeType': mimeType,
+        'fileName': fileName,
+      });
+      state = const AsyncData(null);
+      return response['transactions'] as List<dynamic>;
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
   Future<void> conciliarTransacao(String transacaoId, String ofxId, String data) async {
     state = const AsyncLoading();
     try {

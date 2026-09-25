@@ -14,50 +14,72 @@ class OfxImportScreen extends ConsumerStatefulWidget {
 }
 
 class _OfxImportScreenState extends ConsumerState<OfxImportScreen> {
-  List<dynamic> _ofxTransactions = [];
+  List<dynamic> _extratoTransactions = [];
   bool _isLoading = false;
+  String _origemExtrato = ''; // 'OFX' ou 'PDF'
 
-  void _importarOfx() async {
+  void _importarExtrato({required bool isPdf}) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['ofx'],
+      allowedExtensions: isPdf ? ['pdf'] : ['ofx'],
     );
 
     if (result != null && result.files.single.path != null) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+        _origemExtrato = isPdf ? 'PDF (IA)' : 'OFX';
+      });
       try {
         final bytes = await File(result.files.single.path!).readAsBytes();
         final base64String = base64Encode(bytes);
         
-        final ofxList = await ref.read(financeiroControllerProvider.notifier).uploadOfx(
-          base64String,
-          'application/x-ofx',
-          result.files.single.name,
-        );
+        List<dynamic> transactionsList;
+        if (isPdf) {
+          transactionsList = await ref.read(financeiroControllerProvider.notifier).uploadExtratoPdf(
+            base64String,
+            'application/pdf',
+            result.files.single.name,
+          );
+        } else {
+          transactionsList = await ref.read(financeiroControllerProvider.notifier).uploadOfx(
+            base64String,
+            'application/x-ofx',
+            result.files.single.name,
+          );
+        }
         
         setState(() {
-          _ofxTransactions = ofxList;
+          _extratoTransactions = transactionsList;
           _isLoading = false;
         });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${transactionsList.length} transações extraídas do extrato ${isPdf ? "PDF com IA" : "OFX"}!'),
+              backgroundColor: Colors.teal,
+            ),
+          );
+        }
       } catch (e) {
         setState(() => _isLoading = false);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao importar OFX: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao importar extrato: $e')));
         }
       }
     }
   }
 
-  void _conciliar(dynamic ofxTrn, dynamic erpTrn) async {
+  void _conciliar(dynamic extratoTrn, dynamic erpTrn) async {
     try {
       await ref.read(financeiroControllerProvider.notifier).conciliarTransacao(
         erpTrn['id'], 
-        ofxTrn['id'], 
-        ofxTrn['data']
+        extratoTrn['id'], 
+        extratoTrn['data']
       );
       
       setState(() {
-        _ofxTransactions.removeWhere((t) => t['id'] == ofxTrn['id']);
+        _extratoTransactions.removeWhere((t) => t['id'] == extratoTrn['id']);
       });
 
       if (mounted) {
@@ -76,52 +98,123 @@ class _OfxImportScreenState extends ConsumerState<OfxImportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Conciliação OFX'),
+        title: Text(_origemExtrato.isNotEmpty ? 'Conciliação Bancária ($_origemExtrato)' : 'Conciliação Bancária (OFX / PDF)'),
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
+            tooltip: 'Importar Extrato',
             icon: const Icon(Icons.upload_file),
-            onPressed: _importarOfx,
-            tooltip: 'Importar OFX',
+            onSelected: (val) {
+              if (val == 'ofx') {
+                _importarExtrato(isPdf: false);
+              } else if (val == 'pdf') {
+                _importarExtrato(isPdf: true);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'ofx',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_present, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text('Importar Arquivo .OFX'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Importar Extrato PDF (IA)'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _ofxTransactions.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    _origemExtrato.contains('PDF')
+                        ? 'Lendo e analisando extrato em PDF com Inteligência Artificial...'
+                        : 'Processando arquivo OFX...',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          : _extratoTransactions.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.account_balance, size: 64, color: Colors.grey),
                       const SizedBox(height: 16),
-                      const Text('Nenhum OFX carregado.', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: _importarOfx,
-                        icon: const Icon(Icons.upload),
-                        label: const Text('Carregar Arquivo .OFX'),
+                      const Text('Nenhum extrato carregado.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      const Text('Você pode importar tanto arquivos .OFX quanto extratos bancários em PDF.', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                      const SizedBox(height: 24),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _importarExtrato(isPdf: false),
+                            icon: const Icon(Icons.file_present),
+                            label: const Text('Carregar .OFX'),
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => _importarExtrato(isPdf: true),
+                            icon: const Icon(Icons.picture_as_pdf),
+                            label: const Text('Carregar PDF do Extrato (IA)'),
+                          ),
+                        ],
                       )
                     ],
                   ),
                 )
               : Row(
                   children: [
-                    // Esquerda: Extrato OFX
+                    // Esquerda: Extrato do Banco (OFX ou PDF)
                     Expanded(
                       child: Card(
                         margin: const EdgeInsets.all(8),
                         child: Column(
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Text('Extrato do Banco (OFX)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Extrato Bancário ($_origemExtrato)',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '${_extratoTransactions.length} itens',
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                  ),
+                                ],
+                              ),
                             ),
                             const Divider(),
                             Expanded(
                               child: ListView.builder(
-                                itemCount: _ofxTransactions.length,
+                                itemCount: _extratoTransactions.length,
                                 itemBuilder: (context, index) {
-                                  final t = _ofxTransactions[index];
+                                  final t = _extratoTransactions[index];
                                   final dataFmt = DateFormat('dd/MM/yyyy').format(DateTime.parse(t['data']));
                                   final isDespesa = t['tipo'] == 'DESPESA';
                                   
@@ -130,9 +223,6 @@ class _OfxImportScreenState extends ConsumerState<OfxImportScreen> {
                                     title: Text(t['descricao']),
                                     subtitle: Text(dataFmt),
                                     trailing: Text('R\$ ${t['valor'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    onTap: () {
-                                      // Logica para selecionar
-                                    },
                                   );
                                 },
                               ),
@@ -170,9 +260,9 @@ class _OfxImportScreenState extends ConsumerState<OfxImportScreen> {
                                       final valor = t['valor'] is String ? double.parse(t['valor']) : t['valor'];
                                       final dataPag = t['dataVencimento'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(t['dataVencimento'])) : '';
                                       
-                                      // Procura match no OFX (valor igual e tipo igual)
-                                      final match = _ofxTransactions.cast<Map<String,dynamic>>().firstWhere(
-                                        (ofx) => ofx['valor'] == valor && ofx['tipo'] == t['tipo'], 
+                                      // Procura match no Extrato (valor igual e tipo igual)
+                                      final match = _extratoTransactions.cast<Map<String,dynamic>>().firstWhere(
+                                        (ofx) => (ofx['valor'] - valor).abs() < 0.01 && ofx['tipo'] == t['tipo'], 
                                         orElse: () => <String,dynamic>{}
                                       );
 

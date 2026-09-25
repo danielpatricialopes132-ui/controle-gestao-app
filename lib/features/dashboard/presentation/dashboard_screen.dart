@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../agenda/presentation/agenda_screen.dart';
-import '../../rh/presentation/rh_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -107,12 +106,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ..._tenants.map((t) => DropdownMenuItem<String>(
                         value: t['id'],
                         child: Text(t['nome']),
-                      )).toList(),
+                      )),
                     ],
                     onChanged: (val) {
                       ref.read(tenantOverrideProvider.notifier).setTenant(val);
-                      // Recarrega o dashboard
+                      // Recarrega o dashboard e relatórios
                       ref.invalidate(dashboardSummaryProvider);
+                      ref.invalidate(dreProvider);
                     },
                   ),
             ),
@@ -151,7 +151,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildDrawer(String? email, bool isMaster, String role) {
-    bool hasRole(List<String> roles) => isMaster || roles.contains(role);
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,

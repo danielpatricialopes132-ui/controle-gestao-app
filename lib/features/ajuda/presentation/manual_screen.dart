@@ -203,6 +203,26 @@ class ManualScreen extends ConsumerWidget {
               '- Rastreamento de Duplicidades: Identifica pagamentos e repetições suspeitas de mesmo valor em intervalos curtos com opção de exclusão imediata.\n'
               '- Compliance Fiscal: Monitoramento de pagamentos efetuados sem recibo ou comprovante anexado.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.account_balance,
+              title: '14. Conciliação Bancária Híbrida (.OFX e PDF com IA)',
+              content: 'Batimento financeiro de alta precisão entre extratos reais e o Livro Caixa:\n'
+              '- Suporte Dual: Importe arquivos bancários tradicionais .OFX ou extratos em formato PDF de qualquer instituição bancária (ex: C6 Bank, Itaú, Bradesco, etc.).\n'
+              '- Leitura Inteligente com IA: O modelo multimodal Gemini analisa o PDF do extrato, extraindo linhas de débitos, créditos, PIX, tarifas e valores com precisão de centavos.\n'
+              '- Conciliação em 1 Clique: O sistema localiza correspondências exatas por valor e tipo no Livro Caixa, permitindo vincular a movimentação e atualizar o status para PAGO com data real da compensação.',
+            ),
+
+            _buildSection(
+              context,
+              icon: Icons.sort,
+              title: '15. Filtros e Ordenação Flexível do Fluxo de Caixa',
+              content: 'Navegação rápida e produtiva em bases de lançamentos com alto volume:\n'
+              '- Ordenação Padrão por Data: Por padrão, a listagem exibe sempre os lançamentos mais recentes primeiro (cronologia decrescente).\n'
+              '- Seletor Interativo de Ordenação: Alterne instantaneamente o critério para Data, Valor ou Descrição, e utilize a seta (⬇️ / ⬆️) para alternar entre ordem decrescente ou crescente.\n'
+              '- Filtros Combinados: Filtre por Tipo (Receitas/Despesas), Status (PAGO, PENDENTE, A CONFIRMAR), Conta Bancária Operacional (ex: C6), Obra e Seletor de Período personalizado com busca textual instantânea.',
+            ),
           ],
         ),
       ),

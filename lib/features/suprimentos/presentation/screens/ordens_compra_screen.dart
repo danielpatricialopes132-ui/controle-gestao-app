@@ -37,8 +37,27 @@ class _OrdensCompraScreenState extends ConsumerState<OrdensCompraScreen> {
       appBar: AppBar(title: const Text('Ordens de Compra')),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: provider.ordensCompra.length,
+          : provider.ordensCompra.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Nenhuma ordem de compra encontrada',
+                        style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'As ordens geradas para cotações e compras aparecerão aqui.',
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: provider.ordensCompra.length,
               itemBuilder: (context, index) {
                 final ordem = provider.ordensCompra[index];
                 return Card(
