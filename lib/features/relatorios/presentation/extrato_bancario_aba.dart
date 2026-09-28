@@ -87,6 +87,62 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
     );
   }
 
+  Future<void> _exportarContabilidade() async {
+    try {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Buscando dados e gerando arquivo para contabilidade... aguarde.')),
+      );
+      
+      final query = 'dataInicio=${_dataInicio.toIso8601String()}&dataFim=${_dataFim.toIso8601String()}';
+      final response = await ref.read(apiClientProvider).get('/financeiro/relatorios/exportacao-contabil?$query');
+      
+      final transacoes = response['transacoes'] as List;
+      
+      final rows = <List<dynamic>>[];
+      rows.add([
+        'Data', 
+        'Descrição', 
+        'Beneficiário', 
+        'Obra/C.Custo', 
+        'Categoria (Plano de Contas)', 
+        'Conta Bancária', 
+        'Forma Pagamento', 
+        'Tipo', 
+        'Valor', 
+        'Status Conciliação'
+      ]);
+      
+      for (var t in transacoes) {
+        final dtStr = t['data'] != null ? _formatDate.format(DateTime.parse(t['data'])) : '';
+        rows.add([
+          dtStr,
+          t['descricao'] ?? '',
+          t['beneficiario'] ?? '',
+          t['obra'] ?? '',
+          t['categoria'] ?? '',
+          t['contaBancaria'] ?? '',
+          t['formaPagamento'] ?? '',
+          t['tipo'] ?? '',
+          t['valor'] ?? 0,
+          t['statusConciliacao'] ?? ''
+        ]);
+      }
+      
+      ExportUtils.exportToCsv(
+        fileName: 'exportacao_contabilidade_${_formatDate.format(_dataInicio).replaceAll('/', '-')}',
+        rows: rows,
+      );
+      
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao exportar contabilidade: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final extratoAsync = ref.watch(extratoProvider(_getParams()));
@@ -452,38 +508,52 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
               ],
             ),
           ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF007A8D),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              extratoAsync.whenData((data) => _exportarPdf(data));
-            },
-            icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-            label: const Text('Exportar PDF'),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white70),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              extratoAsync.whenData((data) => _exportarCsv(data));
-            },
-            icon: const Icon(Icons.file_download_outlined, size: 18),
-            label: const Text('CSV'),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF007A8D),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  extratoAsync.whenData((data) => _exportarPdf(data));
+                },
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: const Text('Exportar PDF'),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white70),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  extratoAsync.whenData((data) => _exportarCsv(data));
+                },
+                icon: const Icon(Icons.file_download_outlined, size: 18),
+                label: const Text('CSV Normal'),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white70),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: _exportarContabilidade,
+                icon: const Icon(Icons.account_balance_outlined, size: 18),
+                label: const Text('CSV Contabilidade'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -585,6 +655,8 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
             },
             icon: const Icon(Icons.chat_bubble_outline, size: 18),
             label: const Text('Enviar via WhatsApp'),
+          ),
+            ],
           ),
         ],
       ),
