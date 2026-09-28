@@ -4,6 +4,8 @@ import '../../../../shared/utils/pdf_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/relatorios_provider.dart';
+import 'dart:convert';
+import '../../../../shared/providers/api_client_provider.dart';
 
 class FluxoCaixaAba extends ConsumerWidget {
   const FluxoCaixaAba({super.key});
@@ -134,6 +136,115 @@ class FluxoCaixaAba extends ConsumerWidget {
                       },
                       icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
                       label: const Text('Exportar PDF'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () async {
+                        final phoneController = TextEditingController();
+                        final bool? confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) {
+                            return AlertDialog(
+                              title: const Text('Enviar Fluxo de Caixa via WhatsApp'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('Digite o número de WhatsApp que receberá o PDF (com DDD).'),
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: phoneController,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Número de WhatsApp',
+                                      hintText: 'Ex: 11999999999',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.phone),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                                  child: const Text('Enviar PDF'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmed == true && phoneController.text.isNotEmpty) {
+                          try {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Gerando PDF... aguarde.')),
+                            );
+
+                            final dataList = data.map((item) {
+                              final receitas = (item['receitasRealizadas'] ?? 0) + (item['receitasProjetadas'] ?? 0);
+                              final despesas = (item['despesasRealizadas'] ?? 0) + (item['despesasProjetadas'] ?? 0);
+                              final saldo = item['saldoTotalPrevisto'] ?? 0;
+                              return [
+                                item['mesAno'].toString(),
+                                formatFull.format(receitas),
+                                formatFull.format(despesas),
+                                formatFull.format(saldo),
+                              ];
+                            }).toList();
+
+                            final bytes = await PdfUtils.generateTablePdf(
+                              title: 'Projeção de Fluxo de Caixa',
+                              fileName: 'fluxo_caixa_report',
+                              headers: ['Mês', 'Receitas', 'Despesas', 'Saldo Final'],
+                              data: dataList,
+                            );
+
+                            final base64String = base64Encode(bytes);
+                            final numero = phoneController.text.trim();
+
+                            await ref.read(apiClientProvider).post(
+                              '/whatsapp/send-pdf',
+                              {
+                                'numero': numero,
+                                'base64': base64String,
+                                'fileName': 'Fluxo_de_Caixa.pdf',
+                                'caption': 'Olá! Segue em anexo a projeção do Fluxo de Caixa (6 Meses).'
+                              },
+                            );
+
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Fluxo de Caixa enviado com sucesso pelo WhatsApp!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro ao enviar PDF: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: const Text('Enviar via WhatsApp'),
                     ),
                   ],
                 ),

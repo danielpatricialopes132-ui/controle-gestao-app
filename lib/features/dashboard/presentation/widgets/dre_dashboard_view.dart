@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../providers/dashboard_provider.dart';
 
@@ -22,7 +21,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
     return 0.0;
   }
 
-  Map<String, String> _getParams() {
+  String _getParams() {
     final hoje = DateTime.now();
     DateTime inicio;
     DateTime fim = DateTime(hoje.year, hoje.month + 1, 0, 23, 59, 59);
@@ -37,15 +36,12 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
       fim = DateTime(hoje.year, 12, 31, 23, 59, 59);
     }
 
-    return {
-      'dataInicio': inicio.toIso8601String(),
-      'dataFim': fim.toIso8601String(),
-    };
+    return 'dataInicio=${inicio.toIso8601String()}&dataFim=${fim.toIso8601String()}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final dreAsync = ref.watch(dreProvider(_getParams()));
+    final dreAsync = ref.watch(dreRelatorioProvider(_getParams()));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +51,9 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
           children: [
             Text(
               'Demonstração do Resultado (DRE)',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             SegmentedButton<String>(
               segments: const [
@@ -69,7 +67,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
                   _filtroAtual = newSelection.first;
                 });
               },
-            )
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -82,7 +80,10 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
                 children: [
                   CircularProgressIndicator(strokeWidth: 2),
                   SizedBox(height: 12),
-                  Text('Carregando dados da DRE...', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Text(
+                    'Carregando dados da DRE...',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                 ],
               ),
             ),
@@ -99,12 +100,15 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
                 Icon(Icons.info_outline, color: Colors.red.shade700),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('Não foi possível carregar os dados contábeis da DRE: $err', style: TextStyle(color: Colors.red.shade800, fontSize: 13)),
+                  child: Text(
+                    'Não foi possível carregar os dados contábeis da DRE: $err',
+                    style: TextStyle(color: Colors.red.shade800, fontSize: 13),
+                  ),
                 ),
                 TextButton.icon(
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Recarregar'),
-                  onPressed: () => ref.invalidate(dreProvider),
+                  onPressed: () => ref.invalidate(dreRelatorioProvider),
                 ),
               ],
             ),
@@ -116,16 +120,7 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
               children: [
                 _buildDreSummaryCards(ind),
                 const SizedBox(height: 24),
-                SizedBox(
-                  height: 300,
-                  child: Row(
-                    children: [
-                      Expanded(flex: 2, child: _buildWaterfallChart(ind)),
-                      const SizedBox(width: 16),
-                      Expanded(flex: 1, child: _buildMarginCard(ind)),
-                    ],
-                  ),
-                ),
+                _buildMarginCard(ind),
               ],
             );
           },
@@ -142,17 +137,42 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
       spacing: 16,
       runSpacing: 16,
       children: [
-        _buildMiniCard('Receita Bruta', ind['receitaBruta'], Colors.blue, width),
-        _buildMiniCard('Custos Diretos', ind['custosDiretos'], Colors.red, width),
+        _buildMiniCard(
+          'Receita Bruta',
+          ind['receitaBruta'],
+          Colors.blue,
+          width,
+        ),
+        _buildMiniCard(
+          'Custos Diretos',
+          ind['custosDiretos'],
+          Colors.red,
+          width,
+        ),
         _buildMiniCard('Lucro Bruto', ind['lucroBruto'], Colors.orange, width),
-        _buildMiniCard('Desp. Operacionais', ind['despesasOperacionais'], Colors.redAccent, width),
+        _buildMiniCard(
+          'Desp. Operacionais',
+          ind['despesasOperacionais'],
+          Colors.redAccent,
+          width,
+        ),
         _buildMiniCard('EBITDA', ind['ebitda'], Colors.green, width),
-        _buildMiniCard('Lucro Líquido', ind['lucroLiquido'], Colors.teal, width),
+        _buildMiniCard(
+          'Lucro Líquido',
+          ind['lucroLiquido'],
+          Colors.teal,
+          width,
+        ),
       ],
     );
   }
 
-  Widget _buildMiniCard(String title, dynamic value, Color color, double width) {
+  Widget _buildMiniCard(
+    String title,
+    dynamic value,
+    Color color,
+    double width,
+  ) {
     return Container(
       width: width,
       padding: const EdgeInsets.all(12),
@@ -161,8 +181,12 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
         borderRadius: BorderRadius.circular(8),
         border: Border(left: BorderSide(color: color, width: 4)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
-        ]
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +195,11 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
           const SizedBox(height: 4),
           Text(
             _formatCurrency.format(_parseNum(value)),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -190,105 +218,34 @@ class _DreDashboardViewState extends ConsumerState<DreDashboardView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Margens do Negócio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Margens do Negócio',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const Divider(),
             const SizedBox(height: 16),
             const Text('Margem Bruta', style: TextStyle(color: Colors.grey)),
-            Text('${margemBruta.toStringAsFixed(1)}%', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: margemBruta >= 0 ? Colors.green : Colors.red)),
+            Text(
+              '${margemBruta.toStringAsFixed(1)}%',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: margemBruta >= 0 ? Colors.green : Colors.red,
+              ),
+            ),
             const SizedBox(height: 24),
             const Text('Margem Líquida', style: TextStyle(color: Colors.grey)),
-            Text('${margemLiquida.toStringAsFixed(1)}%', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: margemLiquida >= 0 ? Colors.teal : Colors.red)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWaterfallChart(Map<String, dynamic> ind) {
-    final recBruta = _parseNum(ind['receitaBruta']);
-    final custos = _parseNum(ind['custosDiretos']);
-    final lucroBruto = _parseNum(ind['lucroBruto']);
-    final despesas = _parseNum(ind['despesasOperacionais']);
-    final lucroLiq = _parseNum(ind['lucroLiquido']);
-
-    // Um gráfico de barras simples simulando o DRE (Cascata)
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Composição do Resultado', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            Expanded(
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: (recBruta > 0 ? recBruta : 1000) * 1.2,
-                  barTouchData: BarTouchData(enabled: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          const style = TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10);
-                          String text;
-                          switch (value.toInt()) {
-                            case 0: text = 'Rec. Bruta'; break;
-                            case 1: text = 'Custos'; break;
-                            case 2: text = 'L. Bruto'; break;
-                            case 3: text = 'Despesas'; break;
-                            case 4: text = 'L. Líquido'; break;
-                            default: text = ''; break;
-                          }
-                          return SideTitleWidget(meta: meta, space: 4, child: Text(text, style: style));
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: (recBruta > 0 ? (recBruta / 4) : 250),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: [
-                    _makeGroupData(0, recBruta, Colors.blue),
-                    _makeGroupData(1, custos, Colors.red),
-                    _makeGroupData(2, lucroBruto, Colors.orange),
-                    _makeGroupData(3, despesas, Colors.redAccent),
-                    _makeGroupData(4, lucroLiq, lucroLiq >= 0 ? Colors.teal : Colors.red),
-                  ],
-                ),
+            Text(
+              '${margemLiquida.toStringAsFixed(1)}%',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: margemLiquida >= 0 ? Colors.teal : Colors.red,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  BarChartGroupData _makeGroupData(int x, double y, Color color) {
-    return BarChartGroupData(
-      x: x,
-      barRods: [
-        BarChartRodData(
-          toY: y.abs(),
-          color: color,
-          width: 32,
-          borderRadius: BorderRadius.circular(4),
-          backDrawRodData: BackgroundBarChartRodData(
-            show: true,
-            toY: y < 0 ? y.abs() : 0,
-            color: Colors.transparent,
-          ),
-        ),
-      ],
     );
   }
 }

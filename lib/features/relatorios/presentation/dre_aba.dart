@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/utils/pdf_utils.dart';
 import 'package:intl/intl.dart';
 import '../providers/relatorios_provider.dart';
+import 'dart:convert';
+import '../../../../shared/providers/api_client_provider.dart';
 
 class DREAba extends ConsumerWidget {
   const DREAba({super.key});
@@ -43,20 +45,22 @@ class DREAba extends ConsumerWidget {
         ),
       ),
       data: (data) {
-        final resumo = data['resumo'] as Map<String, dynamic>? ?? {};
-        final receitas = (data['receitas'] as List<dynamic>? ?? []);
-        final custosDiretos = (data['custosDiretos'] as List<dynamic>? ?? []);
-        final despesasFixas = (data['despesasFixas'] as List<dynamic>? ?? []);
+        final resumo = data['indicadores'] as Map<String, dynamic>? ?? {};
+        final detalhamento = data['detalhamento'] as Map<String, dynamic>? ?? {};
+        
+        final receitas = (detalhamento['receitas'] as List<dynamic>? ?? []);
+        final custosDiretos = (detalhamento['custosDiretos'] as List<dynamic>? ?? []);
+        final despesasFixas = (detalhamento['despesasOperacionais'] as List<dynamic>? ?? []);
 
         final formatCurrency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
         final formatPercent = NumberFormat.decimalPattern('pt_BR');
 
-        final faturamento = (resumo['receitas'] ?? 0).toDouble();
+        final faturamento = (resumo['receitaBruta'] ?? 0).toDouble();
         final custos = (resumo['custosDiretos'] ?? 0).toDouble();
         final lucroBruto = (resumo['lucroBruto'] ?? 0).toDouble();
-        final margemBruta = (resumo['margemBrutaPercentual'] ?? 0).toDouble();
+        final margemBruta = (resumo['margemBruta'] ?? 0).toDouble();
         final lucroLiquido = (resumo['lucroLiquido'] ?? 0).toDouble();
-        final margemLiquida = (resumo['margemLiquidaPercentual'] ?? 0).toDouble();
+        final margemLiquida = (resumo['margemLiquida'] ?? 0).toDouble();
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -199,10 +203,11 @@ class DREAba extends ConsumerWidget {
           ),
           ElevatedButton.icon(
             onPressed: () async {
-              final receitasList = data['receitas'] as List<dynamic>? ?? [];
-              final custosDiretosList = data['custosDiretos'] as List<dynamic>? ?? [];
-              final despesasFixasList = data['despesasFixas'] as List<dynamic>? ?? [];
-              final resumoMap = data['resumo'] as Map<String, dynamic>? ?? {};
+              final detalhamento = data['detalhamento'] as Map<String, dynamic>? ?? {};
+              final receitasList = detalhamento['receitas'] as List<dynamic>? ?? [];
+              final custosDiretosList = detalhamento['custosDiretos'] as List<dynamic>? ?? [];
+              final despesasFixasList = detalhamento['despesasOperacionais'] as List<dynamic>? ?? [];
+              final resumoMap = data['indicadores'] as Map<String, dynamic>? ?? {};
 
               final dataList = <List<String>>[
                 ['1. RECEITAS OPERACIONAIS', ''],
@@ -229,6 +234,119 @@ class DREAba extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              final phoneController = TextEditingController();
+              final bool? confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) {
+                  return AlertDialog(
+                    title: const Text('Enviar DRE via WhatsApp'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Digite o número de WhatsApp que receberá o PDF (com DDD).'),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Número de WhatsApp',
+                            hintText: 'Ex: 11999999999',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.phone),
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                        child: const Text('Enviar PDF'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirmed == true && phoneController.text.isNotEmpty) {
+                try {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Gerando PDF... aguarde.')),
+                  );
+
+                  final detalhamento = data['detalhamento'] as Map<String, dynamic>? ?? {};
+                  final receitasList = detalhamento['receitas'] as List<dynamic>? ?? [];
+                  final custosDiretosList = detalhamento['custosDiretos'] as List<dynamic>? ?? [];
+                  final despesasFixasList = detalhamento['despesasOperacionais'] as List<dynamic>? ?? [];
+                  final resumoMap = data['indicadores'] as Map<String, dynamic>? ?? {};
+
+                  final dataList = <List<String>>[
+                    ['1. RECEITAS OPERACIONAIS', ''],
+                    ...receitasList.map((r) => [r['categoria'] ?? 'Sem Categoria', 'R\$ ${(r['valor'] ?? 0).toString()}']),
+                    ['2. CUSTOS DIRETOS (OBRAS)', ''],
+                    ...custosDiretosList.map((c) => [c['categoria'] ?? 'Sem Categoria', 'R\$ ${(c['valor'] ?? 0).toString()}']),
+                    ['3. DESPESAS FIXAS (ADMINISTRATIVO)', ''],
+                    ...despesasFixasList.map((d) => [d['categoria'] ?? 'Sem Categoria', 'R\$ ${(d['valor'] ?? 0).toString()}']),
+                    ['RESULTADO LÍQUIDO FINAL', 'R\$ ${(resumoMap['lucroLiquido'] ?? 0).toString()}'],
+                  ];
+
+                  final bytes = await PdfUtils.generateTablePdf(
+                    title: 'DRE Gerencial - $formatMes',
+                    fileName: 'dre_report',
+                    headers: ['Estrutura DRE', 'Valor (R\$)'],
+                    data: dataList,
+                  );
+
+                  final base64String = base64Encode(bytes);
+                  final numero = phoneController.text.trim();
+
+                  await ref.read(apiClientProvider).post(
+                    '/whatsapp/send-pdf',
+                    {
+                      'numero': numero,
+                      'base64': base64String,
+                      'fileName': 'DRE_${formatMes.replaceAll('/', '-')}.pdf',
+                      'caption': 'Olá! Segue em anexo a Demonstração do Resultado do Exercício (DRE) referente ao período $formatMes.'
+                    },
+                  );
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('DRE enviado com sucesso pelo WhatsApp!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao enviar PDF: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            label: const Text('Enviar via WhatsApp'),
           ),
         ],
       ),
@@ -280,13 +398,13 @@ class DREAba extends ConsumerWidget {
   }
 
   Widget _buildModernDreTable(Map<String, dynamic> resumo, NumberFormat formatCurrency, NumberFormat formatPercent) {
-    final fat = (resumo['receitas'] ?? 0).toDouble();
+    final fat = (resumo['receitaBruta'] ?? 0).toDouble();
     final custos = (resumo['custosDiretos'] ?? 0).toDouble();
     final margemContr = (resumo['lucroBruto'] ?? 0).toDouble();
-    final fixas = (resumo['despesasFixas'] ?? 0).toDouble();
+    final fixas = (resumo['despesasOperacionais'] ?? 0).toDouble();
     final lucroLiq = (resumo['lucroLiquido'] ?? 0).toDouble();
-    final mb = (resumo['margemBrutaPercentual'] ?? 0).toDouble();
-    final ml = (resumo['margemLiquidaPercentual'] ?? 0).toDouble();
+    final mb = (resumo['margemBruta'] ?? 0).toDouble();
+    final ml = (resumo['margemLiquida'] ?? 0).toDouble();
 
     return Container(
       decoration: BoxDecoration(

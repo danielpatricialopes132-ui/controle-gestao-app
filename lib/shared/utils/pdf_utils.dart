@@ -3,13 +3,16 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 
+import 'dart:typed_data';
+
 class PdfUtils {
-  static Future<void> exportTablePdf({
+  static Future<Uint8List> generateTablePdf({
     required String title,
     required String fileName,
     required List<String> headers,
     required List<List<String>> data,
     String? subtitle,
+    Map<int, pw.TableColumnWidth>? columnWidths,
   }) async {
     final pdf = pw.Document();
 
@@ -26,13 +29,32 @@ class PdfUtils {
         build: (pw.Context context) {
           return [
             pw.SizedBox(height: 20),
-            _buildTable(headers, data, primaryColor, secondaryColor, lightGray),
+            _buildTable(headers, data, primaryColor, secondaryColor, lightGray, columnWidths),
           ];
         },
       ),
     );
 
-    await Printing.sharePdf(bytes: await pdf.save(), filename: '$fileName.pdf');
+    return await pdf.save();
+  }
+
+  static Future<void> exportTablePdf({
+    required String title,
+    required String fileName,
+    required List<String> headers,
+    required List<List<String>> data,
+    String? subtitle,
+    Map<int, pw.TableColumnWidth>? columnWidths,
+  }) async {
+    final bytes = await generateTablePdf(
+      title: title,
+      fileName: fileName,
+      headers: headers,
+      data: data,
+      subtitle: subtitle,
+      columnWidths: columnWidths,
+    );
+    await Printing.sharePdf(bytes: bytes, filename: '$fileName.pdf');
   }
 
   static pw.Widget _buildHeader(
@@ -147,12 +169,14 @@ class PdfUtils {
     List<List<String>> data, 
     PdfColor primary, 
     PdfColor secondary,
-    PdfColor lightGray
+    PdfColor lightGray,
+    Map<int, pw.TableColumnWidth>? columnWidths,
   ) {
     return pw.TableHelper.fromTextArray(
       headers: headers,
       data: data,
       border: null,
+      columnWidths: columnWidths,
       headerStyle: pw.TextStyle(
         fontWeight: pw.FontWeight.bold,
         color: PdfColors.white,

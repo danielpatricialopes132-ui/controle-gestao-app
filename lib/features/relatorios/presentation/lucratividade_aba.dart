@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';
 import '../providers/relatorios_provider.dart';
+import '../../../../shared/utils/pdf_utils.dart';
+import 'dart:convert';
+import '../../../../shared/providers/api_client_provider.dart';
 
 class LucratividadeAba extends ConsumerWidget {
   const LucratividadeAba({super.key});
@@ -101,6 +105,148 @@ class LucratividadeAba extends ConsumerWidget {
                           ),
                         ],
                       ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final obras = data['obras'] as List<dynamic>? ?? [];
+                            final dataList = obras.map((obra) {
+                              return [
+                                obra['nome']?.toString() ?? 'Obra',
+                                formatCurrency.format(obra['receitas'] ?? 0),
+                                formatCurrency.format(obra['custosDiretos'] ?? 0),
+                                formatCurrency.format(obra['rateioDespesasFixas'] ?? 0),
+                                formatCurrency.format(obra['lucroLiquido'] ?? 0),
+                              ];
+                            }).toList();
+
+                            await PdfUtils.exportTablePdf(
+                              title: 'Lucratividade por Obra - $formatMes',
+                              fileName: 'lucratividade_report',
+                              headers: ['Obra', 'Receitas', 'Custos Diretos', 'Despesas Sede', 'Lucro Líquido'],
+                              data: dataList,
+                            );
+                          },
+                          icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                          label: const Text('Exportar PDF'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF007A8D),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () async {
+                            final phoneController = TextEditingController();
+                            final bool? confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) {
+                                return AlertDialog(
+                                  title: const Text('Enviar Lucratividade via WhatsApp'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('Digite o número de WhatsApp que receberá o PDF (com DDD).'),
+                                      const SizedBox(height: 12),
+                                      TextField(
+                                        controller: phoneController,
+                                        keyboardType: TextInputType.phone,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Número de WhatsApp',
+                                          hintText: 'Ex: 11999999999',
+                                          border: OutlineInputBorder(),
+                                          prefixIcon: Icon(Icons.phone),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(ctx).pop(true),
+                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                                      child: const Text('Enviar PDF'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirmed == true && phoneController.text.isNotEmpty) {
+                              try {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Gerando PDF... aguarde.')),
+                                );
+
+                                final obras = data['obras'] as List<dynamic>? ?? [];
+                                final dataList = obras.map((obra) {
+                                  return [
+                                    obra['nome']?.toString() ?? 'Obra',
+                                    formatCurrency.format(obra['receitas'] ?? 0),
+                                    formatCurrency.format(obra['custosDiretos'] ?? 0),
+                                    formatCurrency.format(obra['rateioDespesasFixas'] ?? 0),
+                                    formatCurrency.format(obra['lucroLiquido'] ?? 0),
+                                  ];
+                                }).toList();
+
+                                final bytes = await PdfUtils.generateTablePdf(
+                                  title: 'Lucratividade por Obra - $formatMes',
+                                  fileName: 'lucratividade_report',
+                                  headers: ['Obra', 'Receitas', 'Custos Diretos', 'Despesas Sede', 'Lucro Líquido'],
+                                  data: dataList,
+                                );
+
+                                final base64String = base64Encode(bytes);
+                                final numero = phoneController.text.trim();
+
+                                await ref.read(apiClientProvider).post(
+                                  '/whatsapp/send-pdf',
+                                  {
+                                    'numero': numero,
+                                    'base64': base64String,
+                                    'fileName': 'Lucratividade_${formatMes.replaceAll('/', '-')}.pdf',
+                                    'caption': 'Olá! Segue em anexo o relatório de Lucratividade por Obra referente ao período $formatMes.'
+                                  },
+                                );
+
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Lucratividade enviada com sucesso pelo WhatsApp!'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Erro ao enviar PDF: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                          label: const Text('Enviar via WhatsApp'),
+                        ),
+                      ],
                     ),
                   ],
                 ),

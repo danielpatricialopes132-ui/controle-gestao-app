@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/providers/api_client_provider.dart';
 import '../../../../shared/utils/pdf_utils.dart';
+import '../../../../core/network/api_client.dart';
 import '../providers/relatorios_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class AuditoriaConfirmarAba extends ConsumerStatefulWidget {
   const AuditoriaConfirmarAba({super.key});
@@ -256,15 +258,105 @@ class _AuditoriaConfirmarAbaState extends ConsumerState<AuditoriaConfirmarAba> {
               ],
             ),
           ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007A8D),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () async {
-              final dataList = transacoes.map((t) {
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () async {
+                  // Mostrar um diálogo pedindo o número de WhatsApp
+                  final phoneController = TextEditingController();
+                  final bool? confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) {
+                      return AlertDialog(
+                        title: const Text('Enviar Link de Auditoria'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Digite o número de WhatsApp que receberá a notificação (com DDD).'),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: const InputDecoration(
+                                labelText: 'Número de WhatsApp',
+                                hintText: 'Ex: 11999999999',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.phone),
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                            child: const Text('Enviar'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (confirmed == true && phoneController.text.isNotEmpty) {
+                    final numero = phoneController.text.trim();
+                    final tenantIdBase64 = 'Yzg3ZDcwMDktMmQzZS00NWNjLWEyNDItZDQ5NTIxZGU0MTZk'; // Base64 de um tenant válido
+                    final basePortalUrl = ApiClient.baseUrl.replaceAll('/api', '');
+                    final url = '$basePortalUrl/portal/auditoria/$tenantIdBase64';
+                    
+                    try {
+                      // Chama a nova API do backend para notificar via Evolution API
+                      final response = await ref.read(apiClientProvider).post(
+                        '/financeiro/relatorios/auditoria-confirmar/notificar',
+                        {
+                          'numero': numero,
+                          'url': url,
+                        },
+                      );
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Notificação enviada com sucesso pelo WhatsApp!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Erro ao enviar notificação: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
+                icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                label: const Text('Enviar Link via WhatsApp', style: TextStyle(fontSize: 13)),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF007A8D),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () async {
+                  final dataList = transacoes.map((t) {
                 final dt = t['dataVencimento'] != null ? _formatDate.format(DateTime.parse(t['dataVencimento'])) : '-';
                 return [
                   dt,
@@ -272,7 +364,7 @@ class _AuditoriaConfirmarAbaState extends ConsumerState<AuditoriaConfirmarAba> {
                   t['obra']?.toString() ?? '',
                   t['contaBancaria']?.toString() ?? '',
                   _formatCurrency.format(t['valor'] ?? 0),
-                  t['observacao']?.toString() ?? '',
+                  '', // Campo observação em branco para escrita manual
                 ];
               }).toList();
 
@@ -281,10 +373,20 @@ class _AuditoriaConfirmarAbaState extends ConsumerState<AuditoriaConfirmarAba> {
                 fileName: 'auditoria_a_confirmar',
                 headers: ['Data', 'Descrição', 'Obra / Destino', 'Conta', 'Valor', 'Observação'],
                 data: dataList,
+                columnWidths: {
+                  0: pw.FlexColumnWidth(2),
+                  1: pw.FlexColumnWidth(4),
+                  2: pw.FlexColumnWidth(3),
+                  3: pw.FlexColumnWidth(3),
+                  4: pw.FlexColumnWidth(2.5),
+                  5: pw.FlexColumnWidth(4),
+                },
               );
             },
             icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
             label: const Text('Exportar PDF'),
+          ),
+          ],
           ),
         ],
       ),

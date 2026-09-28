@@ -5,6 +5,8 @@ import '../../dashboard/providers/dashboard_provider.dart';
 import '../../financeiro/providers/financeiro_provider.dart';
 import '../../../shared/utils/export_utils.dart';
 import '../utils/pdf_extrato_generator.dart';
+import 'dart:convert';
+import '../../../../shared/providers/api_client_provider.dart';
 
 
 class ExtratoBancarioAba extends ConsumerStatefulWidget {
@@ -23,12 +25,12 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
   final _formatCurrency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   final _formatDate = DateFormat('dd/MM/yyyy');
 
-  Map<String, String> _getParams() {
-    return {
-      'contaBancariaId': _contaSelecionada,
-      'dataInicio': _dataInicio.toIso8601String(),
-      'dataFim': _dataFim.toIso8601String(),
-    };
+  String _getParams() {
+    String query = 'dataInicio=${_dataInicio.toIso8601String()}&dataFim=${_dataFim.toIso8601String()}';
+    if (_contaSelecionada != 'todas') {
+      query += '&contaBancariaId=$_contaSelecionada';
+    }
+    return query;
   }
 
   Future<void> _selecionarData(BuildContext context, bool isInicio) async {
@@ -289,135 +291,101 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: transacoes.length,
-                          separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100),
-                          itemBuilder: (context, index) {
-                            final t = transacoes[index];
-                            final dt = DateTime.parse(t['data']);
-                            final isReceita = t['tipo'] == 'RECEITA';
-                            final val = (t['valor'] ?? 0).toDouble();
-                            final saldoProg = (t['saldoProgressivo'] ?? 0).toDouble();
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: MaterialStateProperty.all(const Color(0xFFF8FAFC)),
+                            dataRowMinHeight: 52,
+                            dataRowMaxHeight: 52,
+                            horizontalMargin: 24,
+                            columnSpacing: 32,
+                            columns: const [
+                              DataColumn(label: Text('Data', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                              DataColumn(label: Text('Descrição', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                              DataColumn(label: Text('Categoria', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                              DataColumn(label: Text('Conta Bancária', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                              DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                              DataColumn(numeric: true, label: Text('Valor', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                              DataColumn(numeric: true, label: Text('Saldo', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)))),
+                            ],
+                            rows: transacoes.map<DataRow>((t) {
+                              final dt = DateTime.parse(t['data']);
+                              final isReceita = t['tipo'] == 'RECEITA';
+                              final val = (t['valor'] ?? 0).toDouble();
+                              final saldoProg = (t['saldoProgressivo'] ?? 0).toDouble();
+                              final isConciliada = t['isConciliada'] == true;
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: isReceita ? const Color(0xFF10B981).withOpacity(0.12) : const Color(0xFFEF4444).withOpacity(0.12),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      isReceita ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                      color: isReceita ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                      size: 20,
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(_formatDate.format(dt), style: TextStyle(color: Colors.grey.shade700))),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 250,
+                                      child: Text(
+                                        t['descricao'] ?? 'Sem descrição',
+                                        style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                t['descricao'] ?? 'Sem descrição',
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            if (t['isConciliada'] == true)
-                                              Container(
-                                                margin: const EdgeInsets.only(left: 8),
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.green.shade200)),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(Icons.check_circle, size: 10, color: Colors.green.shade600),
-                                                    const SizedBox(width: 4),
-                                                    Text('Conciliado', style: TextStyle(fontSize: 10, color: Colors.green.shade700, fontWeight: FontWeight.bold)),
-                                                  ],
-                                                ),
-                                              )
-                                            else
-                                              Container(
-                                                margin: const EdgeInsets.only(left: 8),
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.orange.shade200)),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(Icons.warning_amber_rounded, size: 10, color: Colors.orange.shade600),
-                                                    const SizedBox(width: 4),
-                                                    Text('Não Conciliado', style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.bold)),
-                                                  ],
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              _formatDate.format(dt),
-                                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade100,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                t['categoria']?.toString() ?? 'Geral',
-                                                style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF007A8D).withOpacity(0.08),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                t['conta']?.toString() ?? '',
-                                                style: const TextStyle(fontSize: 11, color: Color(0xFF007A8D), fontWeight: FontWeight.w600),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(t['categoria']?.toString() ?? 'Geral', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        (isReceita ? '+ ' : '- ') + _formatCurrency.format(val),
-                                        style: TextStyle(
-                                          color: isReceita ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                        ),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF007A8D).withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(6),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Saldo: ${_formatCurrency.format(saldoProg)}',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                      child: Text(t['conta']?.toString() ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF007A8D), fontWeight: FontWeight.w600)),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    isConciliada
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.check_circle, size: 14, color: Colors.green.shade600),
+                                              const SizedBox(width: 4),
+                                              Text('Conciliado', style: TextStyle(fontSize: 12, color: Colors.green.shade700, fontWeight: FontWeight.w500)),
+                                            ],
+                                          )
+                                        : Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange.shade600),
+                                              const SizedBox(width: 4),
+                                              Text('Não Conc.', style: TextStyle(fontSize: 12, color: Colors.orange.shade800, fontWeight: FontWeight.w500)),
+                                            ],
+                                          ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      (isReceita ? '+ ' : '- ') + _formatCurrency.format(val),
+                                      style: TextStyle(
+                                        color: isReceita ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                    ],
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      _formatCurrency.format(saldoProg),
+                                      style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ],
-                              ),
-                            );
-                          },
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -511,6 +479,112 @@ class _ExtratoBancarioAbaState extends ConsumerState<ExtratoBancarioAba> {
             },
             icon: const Icon(Icons.file_download_outlined, size: 18),
             label: const Text('CSV'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              if (extratoAsync.hasValue && extratoAsync.value != null) {
+                final data = extratoAsync.value!;
+                final phoneController = TextEditingController();
+                final bool? confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) {
+                    return AlertDialog(
+                      title: const Text('Enviar Extrato via WhatsApp'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Digite o número de WhatsApp que receberá o PDF (com DDD).'),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: const InputDecoration(
+                              labelText: 'Número de WhatsApp',
+                              hintText: 'Ex: 11999999999',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.phone),
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Cancelar'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                          child: const Text('Enviar PDF'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (confirmed == true && phoneController.text.isNotEmpty) {
+                  try {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Gerando PDF... aguarde.')),
+                    );
+
+                    final transacoes = data['transacoes'] as List;
+                    final saldoFinal = (data['saldoFinalPeriodo'] ?? 0).toDouble();
+
+                    final bytes = await PdfExtratoGenerator.generateC6StylePdf(
+                      transacoes: transacoes,
+                      dataInicio: _dataInicio,
+                      dataFim: _dataFim,
+                      saldoFinal: saldoFinal,
+                      empresaNome: 'ECO STONE BRASIL',
+                      cnpj: '63.011.697/0001-16',
+                      contaInfo: _contaSelecionada == 'todas' ? 'Todas as Contas Consolidadas' : 'Agência: 1 • Conta Corrente',
+                    );
+
+                    final base64String = base64Encode(bytes);
+                    final numero = phoneController.text.trim();
+
+                    await ref.read(apiClientProvider).post(
+                      '/whatsapp/send-pdf',
+                      {
+                        'numero': numero,
+                        'base64': base64String,
+                        'fileName': 'Extrato_Bancario_${_formatDate.format(_dataInicio).replaceAll('/', '-')}.pdf',
+                        'caption': 'Olá! Segue em anexo o Extrato Bancário referente ao período de ${_formatDate.format(_dataInicio)} a ${_formatDate.format(_dataFim)}.'
+                      },
+                    );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('PDF enviado com sucesso pelo WhatsApp!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Erro ao enviar PDF: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                }
+              }
+            },
+            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            label: const Text('Enviar via WhatsApp'),
           ),
         ],
       ),

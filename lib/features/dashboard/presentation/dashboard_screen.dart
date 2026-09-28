@@ -110,9 +110,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ],
                     onChanged: (val) {
                       ref.read(tenantOverrideProvider.notifier).setTenant(val);
-                      // Recarrega o dashboard e relatórios
                       ref.invalidate(dashboardSummaryProvider);
-                      ref.invalidate(dreProvider);
+                      ref.invalidate(dreRelatorioProvider);
                     },
                   ),
             ),

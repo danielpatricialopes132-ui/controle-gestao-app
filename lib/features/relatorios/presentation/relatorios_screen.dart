@@ -38,9 +38,14 @@ class RelatoriosScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                      padding: const EdgeInsets.fromLTRB(8, 24, 24, 16),
                       child: Row(
                         children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: 4),
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
