@@ -68,7 +68,7 @@ class DREAba extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header Banner
-              _buildHeaderBanner(data, mesAno),
+              _buildHeaderBanner(context, ref, data, mesAno),
               const SizedBox(height: 20),
 
               // KPI Cards Executivos
@@ -150,7 +150,7 @@ class DREAba extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderBanner(Map<String, dynamic> data, DateTime mesAno) {
+  Widget _buildHeaderBanner(BuildContext context, WidgetRef ref, Map<String, dynamic> data, DateTime mesAno) {
     const meses = [
       '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
