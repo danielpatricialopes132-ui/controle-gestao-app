@@ -257,6 +257,16 @@ class ManualScreen extends ConsumerWidget {
               '- Trilha de Auditoria: Toda aprovação ou recusa registra carimbo de data/hora, perfil decisor e justificativa formal de compliance.\n'
               '- Automação com Contas a Pagar: A aprovação de uma Ordem ou Medição gera automaticamente a respectiva despesa no contas a pagar, com retenções de tributos (INSS, ISS, IRRF) calculadas.',
             ),
+            _buildSection(
+              context,
+              icon: Icons.show_chart,
+              title: '19. Cockpit Executivo & Curva S (EVM)',
+              content: 'Visão executiva em tempo real com Curva S teórica vs. medição real:\n'
+              '- Curva S de Avanço Físico: Comparativo gráfico entre o cronograma planejado e o avanço físico medido no canteiro.\n'
+              '- Earned Value Management (EVM): Cálculo automático do CPI (Cost Performance Index) indicando se o custo real está dentro da meta ou em risco de estouro orçamentário.\n'
+              '- Burn Rate Médio: Projeção de desembolso mensal e saldo orçamentário restante para término das obras.\n'
+              '- Filtro Individual por Obra: Análise isolada de cada canteiro ou consolidação global da carteira de projetos.',
+            ),
           ],
         ),
       ),

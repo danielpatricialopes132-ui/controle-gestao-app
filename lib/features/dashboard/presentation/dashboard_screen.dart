@@ -23,6 +23,7 @@ import '../../biblioteca_tecnica/presentation/screens/biblioteca_tecnica_screen.
 import 'widgets/command_center_dialog.dart';
 import 'widgets/notificacoes_menu_widget.dart';
 import '../../suprimentos/presentation/widgets/central_aprovacoes_dialog.dart';
+import '../../relatorios/presentation/cockpit_executivo_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -119,6 +120,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: const Icon(Icons.saved_search),
             onPressed: () => CommandCenterDialog.show(context, onNavigateTab: _onItemTapped),
             tooltip: 'Command Center (Busca Global)',
+          ),
+          // BOTÃO COCKPIT EXECUTIVO & CURVA S
+          IconButton(
+            icon: const Icon(Icons.show_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CockpitExecutivoScreen()),
+              );
+            },
+            tooltip: 'Cockpit Executivo & Curva S',
           ),
           // BOTÃO DE ALÇADAS & DELIBERAÇÕES
           IconButton(
@@ -466,6 +478,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           },
         ),
       const Divider(),
+      ListTile(
+        leading: const Icon(Icons.show_chart, color: Colors.indigo),
+        title: const Text('Cockpit Executivo & Curva S'),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CockpitExecutivoScreen()),
+          );
+        },
+      ),
       ListTile(
         leading: const Icon(Icons.forum_outlined),
         title: const Text('Mensageria Interna'),
