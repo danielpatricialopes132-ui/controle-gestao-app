@@ -247,6 +247,16 @@ class ManualScreen extends ConsumerWidget {
               '- Agenda Inteligente com Gemini AI: Digite comandos em linguagem natural e a IA preenche o compromisso cruzando colaboradores e obras cadastradas.\n'
               '- Lembretes Automáticos: Alertas programados antes de cada compromisso para pontualidade nas entregas e vistorias.',
             ),
+            _buildSection(
+              context,
+              icon: Icons.gavel,
+              title: '18. Governança, Workflows & Alçadas de Aprovação',
+              content: 'Controle corporativo de limites orçamentários e deliberações financeiras:\n'
+              '- Central de Deliberações: Painel unificado para aprovação ou rejeição de Ordens de Compra e Medições de Empreiteiro com 1 clique.\n'
+              '- Motor de Alçadas Parametrizável: Itens operacionais (até R\$ 5.000,00) podem ser deliberados pela Engenharia ou Financeiro; compras e medições de maior porte exigem autorização expressa da Diretoria ou perfil Master.\n'
+              '- Trilha de Auditoria: Toda aprovação ou recusa registra carimbo de data/hora, perfil decisor e justificativa formal de compliance.\n'
+              '- Automação com Contas a Pagar: A aprovação de uma Ordem ou Medição gera automaticamente a respectiva despesa no contas a pagar, com retenções de tributos (INSS, ISS, IRRF) calculadas.',
+            ),
           ],
         ),
       ),

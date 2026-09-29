@@ -22,6 +22,7 @@ import 'widgets/dre_dashboard_view.dart';
 import '../../biblioteca_tecnica/presentation/screens/biblioteca_tecnica_screen.dart';
 import 'widgets/command_center_dialog.dart';
 import 'widgets/notificacoes_menu_widget.dart';
+import '../../suprimentos/presentation/widgets/central_aprovacoes_dialog.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -118,6 +119,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: const Icon(Icons.saved_search),
             onPressed: () => CommandCenterDialog.show(context, onNavigateTab: _onItemTapped),
             tooltip: 'Command Center (Busca Global)',
+          ),
+          // BOTÃO DE ALÇADAS & DELIBERAÇÕES
+          IconButton(
+            icon: const Icon(Icons.gavel_outlined),
+            onPressed: () => CentralAprovacoesDialog.show(context),
+            tooltip: 'Central de Alçadas & Deliberações',
           ),
           // SININHO DE NOTIFICAÇÕES UNIFICADO
           NotificacoesMenuWidget(onNavigateTab: _onItemTapped),
@@ -699,6 +706,87 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               );
             }
           ),
+          // Banner de Alçadas & Cockpit Executivo (Se houver pendências)
+          if ((stats['totalAprovacoesPendentes'] ?? 0) > 0) ...[
+            const SizedBox(height: 16),
+            InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => CentralAprovacoesDialog.show(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF004D5A), Color(0xFF007A8D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF007A8D).withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.gavel, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Aprovações Pendentes na Alçada',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${stats['totalAprovacoesPendentes']}',
+                                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 11),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Existem ${stats['aprovacoesDetalhes']?['ordensCompra'] ?? 0} ordens de compra e ${stats['aprovacoesDetalhes']?['medicoes'] ?? 0} medições aguardando deliberação de governança.',
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => CentralAprovacoesDialog.show(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF007A8D),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                      child: const Text('Deliberar', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 32),
           
           // DRE Dashboard

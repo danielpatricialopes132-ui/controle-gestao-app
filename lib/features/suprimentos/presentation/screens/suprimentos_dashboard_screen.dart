@@ -4,6 +4,7 @@ import 'fornecedores_screen.dart';
 import 'ordens_compra_screen.dart';
 import 'estoque_screen.dart';
 import 'contratos_empreiteiro_screen.dart';
+import '../widgets/central_aprovacoes_dialog.dart';
 
 class SuprimentosDashboardScreen extends StatelessWidget {
   const SuprimentosDashboardScreen({super.key});
@@ -64,6 +65,15 @@ class SuprimentosDashboardScreen extends StatelessWidget {
               color: Colors.purple,
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const EstoqueScreen()));
+              },
+            ),
+            _buildCard(
+              context,
+              title: 'Alçadas & Aprovações',
+              icon: Icons.gavel,
+              color: const Color(0xFF007A8D),
+              onTap: () {
+                CentralAprovacoesDialog.show(context);
               },
             ),
           ],
