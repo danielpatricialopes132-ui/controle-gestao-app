@@ -20,6 +20,8 @@ import '../../ajuda/presentation/manual_screen.dart';
 import 'package:intl/intl.dart';
 import 'widgets/dre_dashboard_view.dart';
 import '../../biblioteca_tecnica/presentation/screens/biblioteca_tecnica_screen.dart';
+import 'widgets/command_center_dialog.dart';
+import 'widgets/notificacoes_menu_widget.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -86,12 +88,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ERP Controle & Gestão'),
-        elevation: 2,
+        title: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => CommandCenterDialog.show(context, onNavigateTab: _onItemTapped),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.search, size: 18, color: Colors.white70),
+                SizedBox(width: 8),
+                Text(
+                  'Buscar no ERP... (Ctrl + K)',
+                  style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.normal),
+                ),
+              ],
+            ),
+          ),
+        ),
+        elevation: 1,
         actions: [
+          // BOTÃO DO COMMAND CENTER (ÍCONE NO MOBILE OU DIRETO)
+          IconButton(
+            icon: const Icon(Icons.saved_search),
+            onPressed: () => CommandCenterDialog.show(context, onNavigateTab: _onItemTapped),
+            tooltip: 'Command Center (Busca Global)',
+          ),
+          // SININHO DE NOTIFICAÇÕES UNIFICADO
+          NotificacoesMenuWidget(onNavigateTab: _onItemTapped),
           if (isMaster)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: _isLoadingTenants 
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButton<String?>(
@@ -830,23 +862,68 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey))),
-                Icon(icon, color: color, size: 24),
-              ],
+            Positioned(
+              right: -10,
+              top: -10,
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: color.withValues(alpha: 0.05),
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.blueGrey.shade600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(icon, color: color, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    value,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
