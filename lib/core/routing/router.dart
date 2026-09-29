@@ -10,6 +10,7 @@ import '../../features/financeiro/presentation/calculadora/calculadora_financeir
 import '../../features/portal_cliente/presentation/screens/portal_cliente_screen.dart';
 import '../../features/obras/presentation/screens/fvs_screen.dart';
 import '../../features/chat/presentation/conversas_screen.dart';
+import '../../features/portal_fornecedor/presentation/portal_cotacao_fornecedor_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -49,6 +50,13 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/chat',
       builder: (context, state) => const ConversasScreen(),
+    ),
+    GoRoute(
+      path: '/cotacao-fornecedor',
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'] ?? '';
+        return PortalCotacaoFornecedorScreen(token: token);
+      },
     ),
   ],
 );

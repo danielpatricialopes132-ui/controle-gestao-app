@@ -267,6 +267,15 @@ class ManualScreen extends ConsumerWidget {
               '- Burn Rate Médio: Projeção de desembolso mensal e saldo orçamentário restante para término das obras.\n'
               '- Filtro Individual por Obra: Análise isolada de cada canteiro ou consolidação global da carteira de projetos.',
             ),
+            _buildSection(
+              context,
+              icon: Icons.request_quote,
+              title: '20. Portal de Cotações com Fornecedores Externos',
+              content: 'Automação ágil do processo de suprimentos e concorrência de preços:\n'
+              '- Criação de Cotação Multi-Fornecedores: Selecione os materiais do catálogo e marque os fornecedores convidados.\n'
+              '- Link de Autoatendimento com Token Único: O fornecedor recebe um link direto (sem login complexo) para preencher preços, marcas, prazos e condições pelo celular ou computador.\n'
+              '- Comparativo em Tempo Real: A equipe de compras visualiza o mapa comparativo de preços preenchido por cada fornecedor para tomada de decisão.',
+            ),
           ],
         ),
       ),
