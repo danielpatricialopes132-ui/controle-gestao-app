@@ -223,6 +223,30 @@ class ManualScreen extends ConsumerWidget {
               '- Seletor Interativo de Ordenação: Alterne instantaneamente o critério para Data, Valor ou Descrição, e utilize a seta (⬇️ / ⬆️) para alternar entre ordem decrescente ou crescente.\n'
               '- Filtros Combinados: Filtre por Tipo (Receitas/Despesas), Status (PAGO, PENDENTE, A CONFIRMAR), Conta Bancária Operacional (ex: C6), Obra e Seletor de Período personalizado com busca textual instantânea.',
             ),
+
+            _buildSection(
+              context,
+              icon: Icons.forum_outlined,
+              title: '16. Mensageria Interna Corporativa (Chat da Empresa)',
+              content: 'Comunicação corporativa segura e integrada com as obras:\n'
+              '- Conversas Diretas (1:1): Chat privativo entre membros da equipe com recibos de envio e leitura (✓✓).\n'
+              '- Canais por Obra & Departamentos: Grupos de trabalho para troca de informações operacionais sem dispersão.\n'
+              '- Notificações Push Instantâneas: Alertas via Firebase Cloud Messaging direto no smartphone.\n'
+              '- Anexos e Mídias: Envio rápido de fotos de canteiro e documentos com armazenamento em nuvem.\n'
+              '- Botão "Agendar Reunião": Atalho que abre o formulário de agenda já com os participantes do chat preenchidos.',
+            ),
+
+            _buildSection(
+              context,
+              icon: Icons.calendar_month,
+              title: '17. Agenda de Compromissos & Agenda Inteligente com IA',
+              content: 'Organização de tempo executiva com inteligência artificial:\n'
+              '- Visão Dual (Profissional vs. Pessoal): Alterne entre compromissos corporativos e pessoais com privacidade estrita.\n'
+              '- Convites Corporativos: Convide colegas de equipe para reuniões com botões de "Aceitar" ou "Recusar" e disparo de push notification.\n'
+              '- Importação de Convites (.ICS / iCalendar): Importe convites recebidos por e-mail de Google Calendar, Outlook ou Apple Calendar com auto-upsert.\n'
+              '- Agenda Inteligente com Gemini AI: Digite comandos em linguagem natural e a IA preenche o compromisso cruzando colaboradores e obras cadastradas.\n'
+              '- Lembretes Automáticos: Alertas programados antes de cada compromisso para pontualidade nas entregas e vistorias.',
+            ),
           ],
         ),
       ),

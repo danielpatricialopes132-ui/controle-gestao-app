@@ -116,6 +116,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
             ),
           IconButton(
+            icon: const Icon(Icons.forum_outlined),
+            onPressed: () => context.push('/chat'),
+            tooltip: 'Mensageria Interna',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
             tooltip: 'Sair',
@@ -213,10 +218,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           selectedIcon: Icon(Icons.people),
           label: Text('RH'),
         )),
-      if (hasRole(['VENDAS']))
+      if (hasRole(['ENGENHARIA', 'FINANCEIRO', 'RH', 'VENDAS', 'ALMOXARIFE']))
         const MapEntry(4, NavigationRailDestination(
-          icon: Icon(Icons.contacts_outlined),
-          selectedIcon: Icon(Icons.contacts),
+          icon: Icon(Icons.calendar_month_outlined),
+          selectedIcon: Icon(Icons.calendar_month),
           label: Text('Agenda'),
         )),
       if (hasRole(['ALMOXARIFE', 'ENGENHARIA', 'FINANCEIRO']))
@@ -359,10 +364,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             );
           },
         ),
-      if (hasRole(['VENDAS']))
+      if (hasRole(['ENGENHARIA', 'FINANCEIRO', 'RH', 'VENDAS', 'ALMOXARIFE']))
         ListTile(
-          leading: const Icon(Icons.contacts),
-          title: const Text('Agenda'),
+          leading: const Icon(Icons.calendar_month),
+          title: const Text('Agenda de Compromissos'),
           selected: _selectedIndex == 4,
           onTap: () {
             _onItemTapped(4);
@@ -422,6 +427,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           },
         ),
       const Divider(),
+      ListTile(
+        leading: const Icon(Icons.forum_outlined),
+        title: const Text('Mensageria Interna'),
+        onTap: () {
+          Navigator.pop(context);
+          context.push('/chat');
+        },
+      ),
       ListTile(
         leading: const Icon(Icons.library_books),
         title: const Text('Biblioteca Técnica'),

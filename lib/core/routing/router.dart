@@ -9,6 +9,8 @@ import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/financeiro/presentation/calculadora/calculadora_financeira_screen.dart';
 import '../../features/portal_cliente/presentation/screens/portal_cliente_screen.dart';
 import '../../features/obras/presentation/screens/fvs_screen.dart';
+import '../../features/chat/presentation/conversas_screen.dart';
+
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
@@ -44,5 +46,10 @@ final appRouter = GoRouter(
       path: '/fvs',
       builder: (context, state) => const FvsScreen(),
     ),
+    GoRoute(
+      path: '/chat',
+      builder: (context, state) => const ConversasScreen(),
+    ),
   ],
 );
+
