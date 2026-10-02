@@ -6,6 +6,7 @@ import 'estoque_screen.dart';
 import 'contratos_empreiteiro_screen.dart';
 import '../widgets/central_aprovacoes_dialog.dart';
 import 'cotacoes_gestao_screen.dart';
+import 'quantitativos_ia_screen.dart';
 
 class SuprimentosDashboardScreen extends StatelessWidget {
   const SuprimentosDashboardScreen({super.key});
@@ -84,6 +85,15 @@ class SuprimentosDashboardScreen extends StatelessWidget {
               color: Colors.teal,
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CotacoesGestaoScreen()));
+              },
+            ),
+            _buildCard(
+              context,
+              title: 'Quantitativos com IA',
+              icon: Icons.auto_awesome,
+              color: Colors.deepPurple,
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const QuantitativosIaScreen()));
               },
             ),
           ],

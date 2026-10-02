@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/crm_provider.dart';
 import '../../data/models/cliente.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../../obras/providers/obra_ged_provider.dart';
 
@@ -108,20 +109,68 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                       if (val == 'portal') {
                         try {
                           final token = await ref.read(obraGedControllerProvider.notifier).gerarLinkMagicoPortal(cliente.id);
-                          final link = 'http://localhost:3000/portal?token=\$token';
-                          await Clipboard.setData(ClipboardData(text: link));
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Link copiado: \$link')));
-                          }
+                          final baseUrl = kReleaseMode ? 'https://controle-gestao-api.onrender.com' : 'http://localhost:3000';
+                          final link = '$baseUrl/portal?token=$token';
+                          
+                          if (!context.mounted) return;
+                          showDialog(
+                            context: context,
+                            builder: (dCtx) => AlertDialog(
+                              title: const Row(
+                                children: [
+                                  Icon(Icons.workspace_premium, color: Colors.teal),
+                                  SizedBox(width: 8),
+                                  Text('Portal Minha Obra (Cliente)'),
+                                ],
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Link exclusivo para o cliente ${cliente.nome} acompanhar o andamento, feed de fotos, cronograma e revistas executivas:',
+                                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SelectableText(
+                                    link,
+                                    style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Clipboard.setData(ClipboardData(text: link));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Link do portal copiado!')),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.copy),
+                                  label: const Text('Copiar'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(dCtx),
+                                  child: const Text('Fechar'),
+                                ),
+                              ],
+                            ),
+                          );
                         } catch (e) {
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: \$e')));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
                           }
                         }
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'portal', child: Text('Gerar Link do Portal')),
+                      const PopupMenuItem(value: 'portal', child: Row(
+                        children: [
+                          Icon(Icons.public, size: 18, color: Colors.teal),
+                          SizedBox(width: 8),
+                          Text('Portal Minha Obra'),
+                        ],
+                      )),
                     ],
                   ),
                 );

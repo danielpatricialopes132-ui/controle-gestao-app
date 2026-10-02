@@ -11,6 +11,7 @@ import '../../features/portal_cliente/presentation/screens/portal_cliente_screen
 import '../../features/obras/presentation/screens/fvs_screen.dart';
 import '../../features/chat/presentation/conversas_screen.dart';
 import '../../features/portal_fornecedor/presentation/portal_cotacao_fornecedor_screen.dart';
+import '../../features/juridico/presentation/assinar_contrato_externo_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -58,6 +59,14 @@ final appRouter = GoRouter(
         return PortalCotacaoFornecedorScreen(token: token);
       },
     ),
+    GoRoute(
+      path: '/assinar-contrato',
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'] ?? '';
+        return AssinarContratoExternoScreen(token: token);
+      },
+    ),
   ],
 );
+
 

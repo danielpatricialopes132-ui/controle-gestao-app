@@ -276,6 +276,16 @@ class ManualScreen extends ConsumerWidget {
               '- Link de Autoatendimento com Token Único: O fornecedor recebe um link direto (sem login complexo) para preencher preços, marcas, prazos e condições pelo celular ou computador.\n'
               '- Comparativo em Tempo Real: A equipe de compras visualiza o mapa comparativo de preços preenchido por cada fornecedor para tomada de decisão.',
             ),
+            _buildSection(
+              context,
+              icon: Icons.draw_outlined,
+              title: '21. Assinatura Eletrônica Avançada de Contratos (Lei 14.063)',
+              content: 'Validade jurídica e agilidade no fechamento de contratos de empreiteiros e fornecedores:\n'
+              '- Geração Instantânea de Link: Gere um link com token único criptografado no card do contrato.\n'
+              '- Assinatura em Canvas Touch/Mouse: O prestador assina sua rubrica diretamente na tela do smartphone ou computador.\n'
+              '- Validação por OTP via E-mail: Código de segurança de 6 dígitos enviado ao signatário para confirmar identidade.\n'
+              '- Trilha de Auditoria Forense: Registro imutável de IP, navegador, data/hora e Hash SHA-256 de integridade.',
+            ),
           ],
         ),
       ),

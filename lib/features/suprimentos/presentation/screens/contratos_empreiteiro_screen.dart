@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../shared/providers/api_client_provider.dart';
 import '../providers/empreiteiros_provider.dart';
 import '../providers/suprimentos_provider.dart';
 import '../../../obras/providers/obras_provider.dart';
@@ -313,11 +315,17 @@ class _ContratosEmpreiteiroScreenState extends ConsumerState<ContratosEmpreiteir
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton.icon(
+                      onPressed: () => _gerarLinkAssinatura(context, c),
+                      icon: const Icon(Icons.draw_outlined, size: 18, color: Colors.teal),
+                      label: const Text('Assinatura Eletrônica', style: TextStyle(color: Colors.teal)),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
                       onPressed: () => _showNovoAdendoModal(context, c['id']),
                       icon: const Icon(Icons.post_add, size: 18),
-                      label: const Text('Novo Adendo / Aditivo'),
+                      label: const Text('Novo Adendo'),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () => _showNovaMedicaoModal(context, c),
                       icon: const Icon(Icons.rule, size: 18),
@@ -922,4 +930,209 @@ class _ContratosEmpreiteiroScreenState extends ConsumerState<ContratosEmpreiteir
       ),
     );
   }
+
+  Future<void> _gerarLinkAssinatura(BuildContext context, Map<String, dynamic> contrato) async {
+    final fornecedor = contrato['fornecedor'] ?? {};
+    final nomeSignatario = TextEditingController(text: fornecedor['nomeRazao'] ?? fornecedor['nome'] ?? '');
+    final emailSignatario = TextEditingController(text: fornecedor['email'] ?? '');
+    final cpfCnpj = TextEditingController(text: fornecedor['cnpjCpf'] ?? '');
+    final telefoneSignatario = TextEditingController(text: fornecedor['telefone'] ?? '');
+    bool exigirGovBr = true;
+    bool enviarWhatsApp = true;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.verified_user, color: Colors.teal),
+              SizedBox(width: 8),
+              Text('Assinatura Digital ZapSign & gov.br'),
+            ],
+          ),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.teal.shade200),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.account_balance, color: Colors.teal, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Validade jurídica oficial (ICP-Brasil / gov.br / MP 2.200-2/01).',
+                            style: TextStyle(fontSize: 12, color: Colors.teal, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: nomeSignatario,
+                    decoration: const InputDecoration(labelText: 'Nome do Signatário / Empreiteiro *', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: telefoneSignatario,
+                    decoration: const InputDecoration(
+                      labelText: 'WhatsApp do Signatário (com DDD)',
+                      prefixIcon: Icon(Icons.phone, color: Colors.green),
+                      border: OutlineInputBorder(),
+                      hintText: '11999998888',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: emailSignatario,
+                    decoration: const InputDecoration(labelText: 'E-mail do Signatário', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: cpfCnpj,
+                    decoration: const InputDecoration(labelText: 'CPF ou CNPJ', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Exigir autenticação gov.br', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('O signatário deverá entrar com sua conta gov.br para assinar.', style: TextStyle(fontSize: 11)),
+                    value: exigirGovBr,
+                    activeColor: Colors.teal,
+                    onChanged: (val) => setDialogState(() => exigirGovBr = val),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Enviar link pelo WhatsApp', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Dispara notificação automática usando a Evolution API.', style: TextStyle(fontSize: 11)),
+                    value: enviarWhatsApp,
+                    activeColor: Colors.green,
+                    onChanged: (val) => setDialogState(() => enviarWhatsApp = val),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  final data = await ref.read(apiClientProvider).post(
+                    '/juridico/assinaturas',
+                    {
+                      'contratoId': contrato['id'],
+                      'referenciaId': contrato['id'],
+                      'tipoContrato': 'EMPREITEIRO',
+                      'tituloDocumento': 'Contrato de Empreiteiro #${contrato['numeroContrato'] ?? 'S/N'}',
+                      'nomeSignatario': nomeSignatario.text.trim(),
+                      'emailSignatario': emailSignatario.text.trim(),
+                      'cpfCnpjSignatario': cpfCnpj.text.trim(),
+                      'telefoneSignatario': telefoneSignatario.text.trim(),
+                      'urlPdf': contrato['documentoContratoUrl'],
+                      'exigirGovBr': exigirGovBr,
+                      'enviarWhatsApp': enviarWhatsApp,
+                      'usarZapSign': true,
+                    },
+                  );
+                  if (data['success'] == true && context.mounted) {
+                    final linkAssinatura = data['data']?['linkAssinatura'] ?? data['linkAssinatura'] ?? '';
+                    final zapNotif = data['data']?['whatsappNotificado'] == true;
+                    showDialog(
+                      context: context,
+                      builder: (dCtx) => AlertDialog(
+                        title: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.teal),
+                            SizedBox(width: 8),
+                            Text('Assinatura Gerada!'),
+                          ],
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (zapNotif)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.green.shade200),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.chat, color: Colors.green, size: 18),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Notificação enviada com sucesso no WhatsApp do signatário!',
+                                        style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const Text('Link seguro de assinatura com gov.br:'),
+                            const SizedBox(height: 8),
+                            SelectableText(
+                              linkAssinatura,
+                              style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: linkAssinatura));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Link copiado para a Área de Transferência!')),
+                              );
+                            },
+                            icon: const Icon(Icons.copy),
+                            label: const Text('Copiar Link'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(dCtx),
+                            child: const Text('Fechar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro: ${data['error'] ?? 'Falha ao gerar link'}'), backgroundColor: Colors.red),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro na requisição: $e'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.send),
+              label: const Text('Gerar Assinatura Digital'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
